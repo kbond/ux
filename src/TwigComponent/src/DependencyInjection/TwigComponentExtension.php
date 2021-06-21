@@ -11,13 +11,11 @@
 
 namespace Symfony\UX\TwigComponent\DependencyInjection;
 
-use Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument;
-use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\UX\TwigComponent\ComponentFactory;
-use Symfony\UX\TwigComponent\ComponentInterface;
 use Symfony\UX\TwigComponent\ComponentRenderer;
 use Symfony\UX\TwigComponent\Twig\ComponentExtension;
 use Symfony\UX\TwigComponent\Twig\ComponentRuntime;
@@ -31,13 +29,13 @@ final class TwigComponentExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container): void
     {
-        $container->registerForAutoconfiguration(ComponentInterface::class)
-            ->addTag('twig.component')
+        $container->register('ux.twig.component_locator', ServiceLocator::class)
+            ->addTag('container.service_locator')
         ;
 
         $container->register(ComponentFactory::class)
             ->setArguments([
-                new ServiceLocatorArgument(new TaggedIteratorArgument('twig.component', null, 'getComponentName')),
+                new Reference('ux.twig.component_locator'),
                 new Reference('property_accessor'),
             ])
         ;

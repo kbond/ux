@@ -14,7 +14,8 @@ namespace Symfony\UX\TwigComponent\DependencyInjection\Compiler;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Exception\LogicException;
-use Symfony\UX\TwigComponent\ComponentFactory;
+use Symfony\Component\DependencyInjection\Reference;
+use Symfony\UX\TwigComponent\Attribute\TwigComponent;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
@@ -27,23 +28,31 @@ final class TwigComponentPass implements CompilerPassInterface
     {
         $serviceIdMap = [];
 
-        foreach (array_keys($container->findTaggedServiceIds('twig.component')) as $serviceId) {
-            $definition = $container->getDefinition($serviceId);
+        foreach ($container->getDefinitions() as $id => $definition) {
+            $class = $definition->getClass();
+
+            if (!\class_exists($class) || !$attribute = TwigComponent::forClass($class)) {
+                continue;
+            }
+
+            $name = $attribute->getName();
 
             // make all component services non-shared
             $definition->setShared(false);
-
-            $name = $definition->getClass()::getComponentName();
 
             // ensure component not already defined
             if (\array_key_exists($name, $serviceIdMap)) {
                 throw new LogicException(sprintf('Component "%s" is already registered as "%s", components cannot be registered more than once.', $definition->getClass(), $serviceIdMap[$name]));
             }
 
-            // add to service id map for ComponentFactory
-            $serviceIdMap[$name] = $serviceId;
+            $serviceIdMap[$name] = new Reference($id);
+
+            // add a consistent alias for use by LiveComponent
+            $container->setAlias("ux.twig.component.{$name}", $id);
         }
 
-        $container->getDefinition(ComponentFactory::class)->setArgument(2, $serviceIdMap);
+        $container->findDefinition('ux.twig.component_locator')
+            ->setArgument(0, $serviceIdMap)
+        ;
     }
 }
