@@ -1,7 +1,5 @@
 <?php
 
-namespace Symfony\UX\TwigComponent\Attribute;
-
 /*
  * This file is part of the Symfony package.
  *
@@ -10,6 +8,8 @@ namespace Symfony\UX\TwigComponent\Attribute;
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
+namespace Symfony\UX\TwigComponent\Attribute;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
@@ -28,12 +28,12 @@ class TwigComponent
         $this->template = $template;
     }
 
-    public function getName(): string
+    final public function getName(): string
     {
         return $this->name;
     }
 
-    public function getTemplate(): string
+    final public function getTemplate(): string
     {
         return $this->template ?? "components/{$this->name}.html.twig";
     }
@@ -41,7 +41,7 @@ class TwigComponent
     /**
      * @internal
      */
-    public static function forClass(string $class): ?self
+    final public static function forClass(string $class): ?static
     {
         $class = new \ReflectionClass($class);
 
