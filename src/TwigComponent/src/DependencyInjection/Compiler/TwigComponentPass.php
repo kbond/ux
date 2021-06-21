@@ -31,7 +31,7 @@ final class TwigComponentPass implements CompilerPassInterface
         foreach ($container->getDefinitions() as $id => $definition) {
             $class = $definition->getClass();
 
-            if (!class_exists($class) || !$attribute = TwigComponent::forClass($class)) {
+            if (!class_exists($class, false) || !$attribute = TwigComponent::forClass($class)) {
                 continue;
             }
 
