@@ -68,15 +68,6 @@ final class ComponentFactoryTest extends KernelTestCase
         self::bootKernel(['environment' => 'multiple_component_b']);
     }
 
-    public function testCanGetComponentByServiceAlias(): void
-    {
-        self::bootKernel();
-
-        $component = self::$container->get('ux.twig.component.component_a');
-
-        $this->assertInstanceOf(ComponentA::class, $component);
-    }
-
     public function testCanGetUnmountedComponent(): void
     {
         self::bootKernel();
