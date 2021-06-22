@@ -11,7 +11,7 @@
 
 namespace Symfony\UX\TwigComponent;
 
-use Symfony\UX\TwigComponent\Attribute\TwigComponent;
+use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 use Twig\Environment;
 
 /**
@@ -31,7 +31,7 @@ final class ComponentRenderer
     public function render(object $component): string
     {
         // TODO: Self-Rendering components?
-        if (!$attribute = TwigComponent::forClass($component::class)) {
+        if (!$attribute = AsTwigComponent::forClass($component::class)) {
             throw new \InvalidArgumentException(sprintf('"%s" is not a Twig Component, did you forget to add the TwigComponent attribute?', $component::class));
         }
 

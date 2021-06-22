@@ -11,13 +11,13 @@
 
 namespace Symfony\UX\TwigComponent\Tests\Fixture\Component;
 
-use Symfony\UX\TwigComponent\Attribute\TwigComponent;
+use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 use Symfony\UX\TwigComponent\Tests\Fixture\Service\ServiceA;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
  */
-#[TwigComponent('component_a')]
+#[AsTwigComponent('component_a')]
 final class ComponentA
 {
     public $propA;

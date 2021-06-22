@@ -17,7 +17,7 @@ namespace Symfony\UX\TwigComponent\Attribute;
  * @experimental
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-class TwigComponent
+class AsTwigComponent
 {
     private string $name;
     private ?string $template;

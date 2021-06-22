@@ -17,7 +17,7 @@ use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
-use Symfony\UX\TwigComponent\Attribute\TwigComponent;
+use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 use Symfony\UX\TwigComponent\ComponentFactory;
 use Symfony\UX\TwigComponent\ComponentRenderer;
 use Symfony\UX\TwigComponent\Twig\ComponentExtension;
@@ -33,8 +33,8 @@ final class TwigComponentExtension extends Extension
     public function load(array $configs, ContainerBuilder $container): void
     {
         $container->registerAttributeForAutoconfiguration(
-            TwigComponent::class,
-            static function(ChildDefinition $definition, TwigComponent $attribute) {
+            AsTwigComponent::class,
+            static function(ChildDefinition $definition, AsTwigComponent $attribute) {
                 $definition
                     ->setShared(false)
                     ->addTag('twig.component', ['key' => $attribute->getName()])

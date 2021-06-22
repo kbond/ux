@@ -11,12 +11,12 @@
 
 namespace Symfony\UX\TwigComponent\Tests\Fixture\Component;
 
-use Symfony\UX\TwigComponent\Attribute\TwigComponent;
+use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
  */
-#[TwigComponent('component_b')]
+#[AsTwigComponent('component_b')]
 final class ComponentB
 {
 }

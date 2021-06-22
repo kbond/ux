@@ -13,9 +13,9 @@ Every component consists of (1) a class:
 // src/Components/AlertComponent.php
 namespace App\Components;
 
-use Symfony\UX\TwigComponent\Attribute\TwigComponent;
+use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
-#[TwigComponent('alert')]
+#[AsTwigComponent('alert')]
 class AlertComponent
 {
     public string $type = 'success';
@@ -67,9 +67,9 @@ simple as possible:
 // src/Components/AlertComponent.php
 namespace App\Components;
 
-use Symfony\UX\TwigComponent\Attribute\TwigComponent;
+use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
-#[TwigComponent('alert')]
+#[AsTwigComponent('alert')]
 class AlertComponent
 {
 }
@@ -109,7 +109,7 @@ that, create a public property for each:
 // src/Components/AlertComponent.php
 // ...
 
-#[TwigComponent('alert')]
+#[AsTwigComponent('alert')]
 class AlertComponent
 {
 +    public string $message;
@@ -156,8 +156,8 @@ passing it as the second argument to the `TwigComponent` attribute:
 // src/Components/AlertComponent.php
 // ...
 
--#[TwigComponent('alert')]
-+#[TwigComponent('alert', 'my/custom/template.html.twig')]
+-#[AsTwigComponent('alert')]
++#[AsTwigComponent('alert', 'my/custom/template.html.twig')]
 class AlertComponent
 {
     // ...
@@ -174,7 +174,7 @@ a `mount()` method in your component:
 // src/Components/AlertComponent.php
 // ...
 
-#[TwigComponent('alert')]
+#[AsTwigComponent('alert')]
 class AlertComponent
 {
     public string $message;
@@ -221,9 +221,9 @@ Doctrine entity and `ProductRepository`:
 namespace App\Components;
 
 use App\Repository\ProductRepository;
-use Symfony\UX\TwigComponent\Attribute\TwigComponent;
+use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
-#[TwigComponent('featured_products')]
+#[AsTwigComponent('featured_products')]
 class FeaturedProductsComponent
 {
     private ProductRepository $productRepository;
@@ -297,7 +297,7 @@ method), you can store its result on a private property:
 namespace App\Components;
 // ...
 
-#[TwigComponent('featured_products')]
+#[AsTwigComponent('featured_products')]
 class FeaturedProductsComponent
 {
     private ProductRepository $productRepository;
