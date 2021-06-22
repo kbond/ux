@@ -51,9 +51,17 @@ final class Kernel extends BaseKernel
         ]);
 
         $c->register(ServiceA::class)->setAutoconfigured(true)->setAutowired(true);
-        $c->register(ComponentA::class)->setAutoconfigured(true)->setAutowired(true);
-        $c->register('component_b', ComponentB::class)->setAutoconfigured(true)->setAutowired(true);
-        $c->register(ComponentC::class)->setAutoconfigured(true)->setAutowired(true);
+
+        $componentA = $c->register(ComponentA::class)->setAutoconfigured(true)->setAutowired(true);
+        $componentB = $c->register('component_b', ComponentB::class)->setAutoconfigured(true)->setAutowired(true);
+        $componentC = $c->register(ComponentC::class)->setAutoconfigured(true)->setAutowired(true);
+
+        if (self::VERSION_ID < 50300) {
+            // add tag manually
+            $componentA->addTag('twig.component', ['key' => 'component_a']);
+            $componentB->addTag('twig.component', ['key' => 'component_b']);
+            $componentC->addTag('twig.component', ['key' => 'component_c']);
+        }
     }
 
     protected function configureRoutes(RouteCollectionBuilder $routes): void

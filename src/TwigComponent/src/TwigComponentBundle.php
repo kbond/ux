@@ -11,7 +11,9 @@
 
 namespace Symfony\UX\TwigComponent;
 
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
+use Symfony\UX\TwigComponent\DependencyInjection\Compiler\TwigComponentPass;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
@@ -20,4 +22,8 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  */
 final class TwigComponentBundle extends Bundle
 {
+    public function build(ContainerBuilder $container): void
+    {
+        $container->addCompilerPass(new TwigComponentPass());
+    }
 }
