@@ -12,7 +12,6 @@
 namespace Symfony\UX\TwigComponent\Tests\Integration;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\DependencyInjection\Exception\LogicException;
 use Symfony\UX\TwigComponent\ComponentFactory;
 use Symfony\UX\TwigComponent\Tests\Fixture\Component\ComponentA;
 use Symfony\UX\TwigComponent\Tests\Fixture\Component\ComponentB;
@@ -58,14 +57,6 @@ final class ComponentFactoryTest extends KernelTestCase
         $componentB = $factory->create('component_b');
 
         $this->assertNotSame(spl_object_id($componentA), spl_object_id($componentB));
-    }
-
-    public function testCannotRegisterMultipleComponentsWithTheSameName(): void
-    {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Component "Symfony\UX\TwigComponent\Tests\Fixture\Component\ComponentB" is already registered as "component_b", components cannot be registered more than once.');
-
-        self::bootKernel(['environment' => 'multiple_component_b']);
     }
 
     public function testCanGetUnmountedComponent(): void

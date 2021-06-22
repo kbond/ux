@@ -54,10 +54,6 @@ final class Kernel extends BaseKernel
         $c->register(ComponentA::class)->setAutoconfigured(true)->setAutowired(true);
         $c->register('component_b', ComponentB::class)->setAutoconfigured(true)->setAutowired(true);
         $c->register(ComponentC::class)->setAutoconfigured(true)->setAutowired(true);
-
-        if ('multiple_component_b' === $this->environment) {
-            $c->register('different_component_b', ComponentB::class)->setAutoconfigured(true)->setAutowired(true);
-        }
     }
 
     protected function configureRoutes(RouteCollectionBuilder $routes): void
