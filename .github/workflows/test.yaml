@@ -55,6 +55,19 @@ jobs:
                   composer update --prefer-lowest --prefer-dist --no-interaction --no-ansi --no-progress
                   php vendor/bin/simple-phpunit
 
+    tests-php8-low-deps:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@master
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.0'
+            - name: TwigComponent
+              run: |
+                  cd src/TwigComponent
+                  composer update --prefer-lowest --prefer-dist --no-interaction --no-ansi --no-progress
+                  php vendor/bin/simple-phpunit
+
     tests-php-high-deps:
         runs-on: ubuntu-latest
         steps:
