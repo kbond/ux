@@ -21,6 +21,8 @@ use Symfony\UX\TwigComponent\ComponentFactory;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
+ *
+ * @experimental
  */
 final class TwigComponentPass implements CompilerPassInterface
 {
