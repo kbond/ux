@@ -12,6 +12,7 @@
 namespace Symfony\UX\TwigComponent\Tests\Integration;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\DependencyInjection\Exception\LogicException;
 use Symfony\UX\TwigComponent\ComponentFactory;
 use Symfony\UX\TwigComponent\Tests\Fixture\Component\ComponentA;
 use Symfony\UX\TwigComponent\Tests\Fixture\Component\ComponentB;
@@ -125,5 +126,13 @@ final class ComponentFactoryTest extends KernelTestCase
         $this->expectExceptionMessage('Unable to write "service" to component "Symfony\UX\TwigComponent\Tests\Fixture\Component\ComponentA". Make sure this is a writable property or create a mount() with a $service argument.');
 
         $factory->create('component_a', ['propB' => 'B', 'service' => 'invalid']);
+    }
+
+    public function testTwigComponentServiceMustHaveAttribute(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Service "Symfony\UX\TwigComponent\Tests\Fixture\Service\ServiceA" is tagged as a "twig.component" but does not have a "Symfony\UX\TwigComponent\Attribute\AsTwigComponent" class attribute.');
+
+        self::bootKernel(['environment' => 'missing_attribute']);
     }
 }

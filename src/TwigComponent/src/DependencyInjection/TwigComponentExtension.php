@@ -12,7 +12,6 @@
 namespace Symfony\UX\TwigComponent\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument;
-use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -35,15 +34,15 @@ final class TwigComponentExtension extends Extension
         if (method_exists($container, 'registerAttributeForAutoconfiguration')) {
             $container->registerAttributeForAutoconfiguration(
                 AsTwigComponent::class,
-                static function(ChildDefinition $definition, AsTwigComponent $attribute) {
-                    $definition->addTag('twig.component', ['key' => $attribute->getName()]);
+                static function(ChildDefinition $definition) {
+                    $definition->addTag('twig.component');
                 }
             );
         }
 
         $container->register(ComponentFactory::class)
             ->setArguments([
-                new ServiceLocatorArgument(new TaggedIteratorArgument('twig.component', 'key')),
+                new ServiceLocatorArgument(),
                 new Reference('property_accessor'),
             ])
         ;
