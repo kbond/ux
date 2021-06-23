@@ -41,7 +41,7 @@ class AsTwigComponent
     /**
      * @internal
      */
-    final public static function forClass(string $class): ?static
+    final public static function forClass(string $class): ?self
     {
         $class = new \ReflectionClass($class);
 
