@@ -60,7 +60,7 @@ That's it! We're ready to go!
 
 Let's create a reusable "alert" element that we can use to show
 success or error messages across our site. Step 1 is always to create
-a component has a `TwigComponent` class attribute. Let's start as
+a component that has an `AsTwigComponent` class attribute. Let's start as
 simple as possible:
 
 ```php
