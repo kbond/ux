@@ -76,7 +76,7 @@ class AlertComponent
 ```
 
 **Note:** If this class is auto-configured, _and_ you're using Symfony 5.3+,
-you're all set. Otherwise, register the service and tag it with
+then you're all set. Otherwise, register the service and tag it with
 `twig.component`.
 
 Step 2 is to create a template for this component. By default,
