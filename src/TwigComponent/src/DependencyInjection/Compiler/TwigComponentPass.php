@@ -33,16 +33,11 @@ final class TwigComponentPass implements CompilerPassInterface
         foreach (array_keys($container->findTaggedServiceIds('twig.component')) as $id) {
             $componentDefinition = $container->findDefinition($id);
 
-            $attributes = $container->getReflectionClass($componentDefinition->getClass())
-                ->getAttributes(AsTwigComponent::class, \ReflectionAttribute::IS_INSTANCEOF)
-            ;
-
-            if (!isset($attributes[0])) {
-                throw new LogicException(sprintf('Service "%s" is tagged as a "twig.component" but does not have a "%s" class attribute.', $id, AsTwigComponent::class));
+            try {
+                $attribute = AsTwigComponent::forClass($componentDefinition->getClass());
+            } catch (\InvalidArgumentException $e) {
+                throw new LogicException(sprintf('Service "%s" is tagged as a "twig.component" but does not have a "%s" class attribute.', $id, AsTwigComponent::class), 0, $e);
             }
-
-            /** @var AsTwigComponent $attribute */
-            $attribute = $attributes[0]->newInstance();
 
             $componentMap[$attribute->getName()] = new Reference($id);
 
