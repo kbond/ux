@@ -9,15 +9,16 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\UX\LiveComponent;
+namespace Symfony\UX\LiveComponent\Attribute;
 
-use Symfony\UX\TwigComponent\ComponentInterface;
+use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
  *
  * @experimental
  */
-interface LiveComponentInterface extends ComponentInterface
+#[\Attribute(\Attribute::TARGET_CLASS)]
+final class AsLiveComponent extends AsTwigComponent
 {
 }

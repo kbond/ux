@@ -56,7 +56,7 @@ final class LiveComponentHydrator
         $this->secret = $secret;
     }
 
-    public function isActionAllowed(LiveComponentInterface $component, string $action): bool
+    public function isActionAllowed(object $component, string $action): bool
     {
         foreach ((new \ReflectionClass($component))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
             if ($action === $method->name && $this->annotationReader->getMethodAnnotation($method, LiveAction::class)) {
@@ -67,7 +67,7 @@ final class LiveComponentHydrator
         return false;
     }
 
-    public function dehydrate(LiveComponentInterface $component): array
+    public function dehydrate(object $component): array
     {
         foreach ($this->preDehydrateMethods($component) as $method) {
             $component->{$method->name}();
@@ -126,7 +126,7 @@ final class LiveComponentHydrator
         return $data;
     }
 
-    public function hydrate(LiveComponentInterface $component, array $data): void
+    public function hydrate(object $component, array $data): void
     {
         $readonlyProperties = [];
 
@@ -262,7 +262,7 @@ final class LiveComponentHydrator
      *
      * @return scalar|array|null
      */
-    private function dehydrateProperty($value, string $name, LiveComponentInterface $component)
+    private function dehydrateProperty($value, string $name, object $component)
     {
         if (is_scalar($value) || \is_array($value) || null === $value) {
             // nothing to dehydrate...
@@ -332,7 +332,7 @@ final class LiveComponentHydrator
     /**
      * @return \ReflectionMethod[]
      */
-    private function preDehydrateMethods(LiveComponentInterface $component): iterable
+    private function preDehydrateMethods(object $component): iterable
     {
         foreach ((new \ReflectionClass($component))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
             if ($this->annotationReader->getMethodAnnotation($method, PreDehydrate::class)) {
@@ -344,7 +344,7 @@ final class LiveComponentHydrator
     /**
      * @return \ReflectionMethod[]
      */
-    private function postHydrateMethods(LiveComponentInterface $component): iterable
+    private function postHydrateMethods(object $component): iterable
     {
         foreach ((new \ReflectionClass($component))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
             if ($this->annotationReader->getMethodAnnotation($method, PostHydrate::class)) {
@@ -353,7 +353,7 @@ final class LiveComponentHydrator
         }
     }
 
-    private function getFrontendFieldName(LiveProp $liveProp, LiveComponentInterface $component, \ReflectionProperty $property): string
+    private function getFrontendFieldName(LiveProp $liveProp, object $component, \ReflectionProperty $property): string
     {
         return $liveProp->calculateFieldName($component, $property->getName());
     }

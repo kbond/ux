@@ -43,7 +43,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
         $factory = self::$container->get(ComponentFactory::class);
 
         /** @var Component1 $component */
-        $component = $factory->create(Component1::getComponentName(), [
+        $component = $factory->create('component1', [
             'prop1' => $entity = create(Entity1::class)->object(),
             'prop2' => $date = new \DateTime('2021-03-05 9:23'),
             'prop3' => 'value3',
@@ -88,7 +88,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
         $factory = self::$container->get(ComponentFactory::class);
 
         /** @var Component2 $component */
-        $component = $factory->create(Component2::getComponentName());
+        $component = $factory->create('component2');
 
         $dehydrated = $hydrator->dehydrate($component);
         $token = null;
@@ -163,7 +163,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
         $factory = self::$container->get(ComponentFactory::class);
 
         /** @var Component2 $component */
-        $component = $factory->create(Component2::getComponentName());
+        $component = $factory->create('component2');
 
         $dehydrated = $hydrator->dehydrate($component);
 
@@ -188,7 +188,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
         $factory = self::$container->get(ComponentFactory::class);
 
         /** @var Component2 $component */
-        $component = $factory->create(Component2::getComponentName());
+        $component = $factory->create('component2');
 
         $dehydrated = $hydrator->dehydrate($component);
         $token = null;

@@ -1,34 +1,51 @@
 <?php
 
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Symfony\UX\LiveComponent\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
+use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\ComponentValidator;
 use Symfony\UX\LiveComponent\ComponentValidatorInterface;
 use Symfony\UX\LiveComponent\EventListener\LiveComponentSubscriber;
 use Symfony\UX\LiveComponent\Hydrator\DoctrineEntityPropertyHydrator;
 use Symfony\UX\LiveComponent\Hydrator\NormalizerBridgePropertyHydrator;
 use Symfony\UX\LiveComponent\LiveComponentHydrator;
-use Symfony\UX\LiveComponent\LiveComponentInterface;
 use Symfony\UX\LiveComponent\PropertyHydratorInterface;
 use Symfony\UX\LiveComponent\Twig\LiveComponentExtension as LiveComponentTwigExtension;
 use Symfony\UX\LiveComponent\Twig\LiveComponentRuntime;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
+ *
+ * @experimental
  */
 final class LiveComponentExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container): void
     {
-        $container->registerForAutoconfiguration(LiveComponentInterface::class)
-            ->addTag('controller.service_arguments')
-        ;
+        if (method_exists($container, 'registerAttributeForAutoconfiguration')) {
+            $container->registerAttributeForAutoconfiguration(AsLiveComponent::class, function (ChildDefinition $definition) {
+                $definition
+                    ->addTag('twig.component')
+                    ->addTag('controller.service_arguments')
+                ;
+            });
+        }
 
         $container->registerForAutoconfiguration(PropertyHydratorInterface::class)
             ->addTag('twig.component.property_hydrator')

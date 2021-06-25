@@ -15,9 +15,10 @@ A real-time product search component might look like this:
 // src/Components/ProductSearchComponent.php
 namespace App\Components;
 
-use Symfony\UX\LiveComponent\LiveComponentInterface;
+use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 
-class ProductSearchComponent implements LiveComponentInterface
+#[AsLiveComponent('product_search')]
+class ProductSearchComponent
 {
     public string $query = '';
 
@@ -32,11 +33,6 @@ class ProductSearchComponent implements LiveComponentInterface
     {
         // example method that returns an array of Products
         return $this->productRepository->search($this->query);
-    }
-
-    public static function getComponentName(): string
-    {
-        return 'product_search';
     }
 }
 ```
@@ -103,18 +99,14 @@ Suppose you've already built a basic Twig component:
 // src/Components/RandomNumberComponent.php
 namespace App\Components;
 
-use Symfony\UX\TwigComponent\ComponentInterface;
+use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
-class RandomNumberComponent implements ComponentInterface
+#[AsTwigComponent('random_number')]
+class RandomNumberComponent
 {
     public function getRandomNumber(): string
     {
         return rand(0, 1000);
-    }
-
-    public static function getComponentName(): string
-    {
-        return 'random_number';
     }
 }
 ```
@@ -127,16 +119,18 @@ class RandomNumberComponent implements ComponentInterface
 ```
 
 To transform this into a "live" component (i.e. one that
-can be re-rendered live on the frontend), change your
-component's interface to `LiveComponentInterface`:
+can be re-rendered live on the frontend), replace
+component's `AsTwigComponent` attribute to `AsLiveComponent`:
 
 ```diff
 // src/Components/RandomNumberComponent.php
 
-+use Symfony\UX\LiveComponent\LiveComponentInterface;
+-use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
++use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 
--class RandomNumberComponent implements ComponentInterface
-+class RandomNumberComponent implements LiveComponentInterface
+-#[AsTwigComponent('random_number')]
+-#[AsLiveComponent('random_number')]
+class RandomNumberComponent
 {
 }
 ```
@@ -183,7 +177,8 @@ namespace App\Components;
 // ...
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 
-class RandomNumberComponent implements LiveComponentInterface
+#[AsLiveComponent('random_number')]
+class RandomNumberComponent
 {
     /** @LiveProp */
     public int $min = 0;
@@ -267,7 +262,7 @@ the `writable=true` option:
 // src/Components/RandomNumberComponent.php
 // ...
 
-class RandomNumberComponent implements LiveComponentInterface
+class RandomNumberComponent
 {
 -    /** @LiveProp() */
 +    /** @LiveProp(writable=true) */
@@ -438,7 +433,7 @@ namespace App\Components;
 // ...
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 
-class RandomNumberComponent implements LiveComponentInterface
+class RandomNumberComponent
 {
     // ...
 
@@ -503,7 +498,7 @@ namespace App\Components;
 // ...
 use Psr\Log\LoggerInterface;
 
-class RandomNumberComponent implements LiveComponentInterface
+class RandomNumberComponent
 {
     // ...
 
@@ -548,7 +543,7 @@ namespace App\Components;
 // ...
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-class RandomNumberComponent extends AbstractController implements LiveComponentInterface
+class RandomNumberComponent extends AbstractController
 {
     // ...
 
@@ -684,11 +679,12 @@ use App\Entity\Post;
 use App\Form\PostType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
+use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
-use Symfony\UX\LiveComponent\LiveComponentInterface;
 use Symfony\UX\LiveComponent\ComponentWithFormTrait;
 
-class PostFormComponent extends AbstractController implements LiveComponentInterface
+#[AsLiveComponent('post_form')]
+class PostFormComponent extends AbstractController
 {
     use ComponentWithFormTrait;
 
@@ -714,11 +710,6 @@ class PostFormComponent extends AbstractController implements LiveComponentInter
     {
         // we can extend AbstractController to get the normal shortcuts
         return $this->createForm(PostType::class, $this->post);
-    }
-
-    public static function getComponentName(): string
-    {
-        return 'post_form';
     }
 }
 ```
@@ -875,7 +866,7 @@ action to the component:
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 
-class PostFormComponent extends AbstractController implements LiveComponentInterface
+class PostFormComponent extends AbstractController
 {
     // ...
 
@@ -932,20 +923,16 @@ that is being edited:
 namespace App\Twig\Components;
 
 use App\Entity\Post;
+use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
-use Symfony\UX\LiveComponent\LiveComponentInterface;
 
-class EditPostComponent implements LiveComponentInterface
+#[AsLiveComponent('edit_post')]
+class EditPostComponent
 {
     /**
      * @LiveProp()
      */
     public Post $post;
-
-    public static function getComponentName(): string
-    {
-        return 'edit_post';
-    }
 }
 ```
 
@@ -985,7 +972,7 @@ you can enable it via the `exposed` option:
 ```diff
 // ...
 
-class EditPostComponent implements LiveComponentInterface
+class EditPostComponent
 {
     /**
 -     * @LiveProp(exposed={})
@@ -1020,12 +1007,13 @@ First use the `ValidatableComponentTrait` and add any constraints you need:
 
 ```php
 use App\Entity\User;
+use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
-use Symfony\UX\LiveComponent\LiveComponentInterface;
 use Symfony\UX\LiveComponent\ValidatableComponentTrait;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class EditUserComponent implements LiveComponentInterface
+#[AsLiveComponent('edit_user')]
+class EditUserComponent
 {
     use ValidatableComponentTrait;
 
@@ -1040,11 +1028,6 @@ class EditUserComponent implements LiveComponentInterface
      * @Assert\IsTrue()
      */
     public bool $agreeToTerms = false;
-
-    public static function getComponentName() : string
-    {
-        return 'edit_user';
-    }
 }
 ```
 
@@ -1063,7 +1046,8 @@ in an action:
 ```php
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 
-class EditUserComponent implements LiveComponentInterface
+#[AsLiveComponent('edit_user')]
+class EditUserComponent
 {
     // ...
 

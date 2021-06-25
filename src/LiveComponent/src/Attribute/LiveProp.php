@@ -11,8 +11,6 @@
 
 namespace Symfony\UX\LiveComponent\Attribute;
 
-use Symfony\UX\LiveComponent\LiveComponentInterface;
-
 /**
  * @Annotation
  * @Target("PROPERTY")
@@ -79,7 +77,7 @@ final class LiveProp
         return $this->dehydrateWith ? trim($this->dehydrateWith, '()') : null;
     }
 
-    public function calculateFieldName(LiveComponentInterface $component, string $fallback): string
+    public function calculateFieldName(object $component, string $fallback): string
     {
         if (!$this->fieldName) {
             return $fallback;

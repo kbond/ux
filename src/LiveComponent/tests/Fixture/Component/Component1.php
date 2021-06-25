@@ -11,15 +11,16 @@
 
 namespace Symfony\UX\LiveComponent\Tests\Fixture\Component;
 
+use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
-use Symfony\UX\LiveComponent\LiveComponentInterface;
 use Symfony\UX\LiveComponent\Tests\Fixture\Entity\Entity1;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
  */
-final class Component1 implements LiveComponentInterface
+#[AsLiveComponent('component1')]
+final class Component1
 {
     /**
      * @LiveProp
@@ -37,11 +38,6 @@ final class Component1 implements LiveComponentInterface
     public $prop3;
 
     public $prop4;
-
-    public static function getComponentName(): string
-    {
-        return 'component1';
-    }
 
     /**
      * @LiveAction

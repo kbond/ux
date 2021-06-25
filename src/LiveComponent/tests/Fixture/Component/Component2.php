@@ -12,17 +12,19 @@
 namespace Symfony\UX\LiveComponent\Tests\Fixture\Component;
 
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\BeforeReRender;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\Attribute\PostHydrate;
 use Symfony\UX\LiveComponent\Attribute\PreDehydrate;
-use Symfony\UX\LiveComponent\LiveComponentInterface;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
  */
-final class Component2 implements LiveComponentInterface
+#[AsLiveComponent('component2')]
+final class Component2
 {
     /**
      * @LiveProp
@@ -46,14 +48,9 @@ final class Component2 implements LiveComponentInterface
     /**
      * @LiveAction
      */
-    public function redirect(): RedirectResponse
+    public function redirect(UrlGeneratorInterface $urlGenerator): RedirectResponse
     {
-        return new RedirectResponse('/');
-    }
-
-    public static function getComponentName(): string
-    {
-        return 'component2';
+        return new RedirectResponse($urlGenerator->generate('homepage'));
     }
 
     /**

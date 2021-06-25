@@ -13,7 +13,6 @@ namespace Symfony\UX\LiveComponent\Tests\Unit\Attribute;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
-use Symfony\UX\LiveComponent\LiveComponentInterface;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
@@ -34,24 +33,14 @@ final class LivePropTest extends TestCase
 
     public function testCanCallCalculateFieldNameAsString(): void
     {
-        $component = new class() implements LiveComponentInterface {
-            public static function getComponentName(): string
-            {
-                return 'name';
-            }
-        };
+        $component = new class() {};
 
         $this->assertSame('field', (new LiveProp(['fieldName' => 'field']))->calculateFieldName($component, 'fallback'));
     }
 
     public function testCanCallCalculateFieldNameAsMethod(): void
     {
-        $component = new class() implements LiveComponentInterface {
-            public static function getComponentName(): string
-            {
-                return 'name';
-            }
-
+        $component = new class() {
             public function fieldName(): string
             {
                 return 'foo';
@@ -63,12 +52,7 @@ final class LivePropTest extends TestCase
 
     public function testCanCallCalculateFieldNameWhenNotSet(): void
     {
-        $component = new class() implements LiveComponentInterface {
-            public static function getComponentName(): string
-            {
-                return 'name';
-            }
-        };
+        $component = new class() {};
 
         $this->assertSame('fallback', (new LiveProp([]))->calculateFieldName($component, 'fallback'));
     }
