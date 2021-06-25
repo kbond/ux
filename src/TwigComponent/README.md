@@ -81,8 +81,8 @@ then you're all set. Otherwise, register the service and tag it with
 
 Step 2 is to create a template for this component. By default,
 templates live in `templates/components/{Component Name}.html.twig`,
-where `{Component Name}` is whatever you set as the `TwigComponent`
-attribute's `name` parameter:
+where `{Component Name}` is whatever you passed as the first argument
+to the `AsTwigComponent` class attribute:
 
 ```twig
 {# templates/components/alert.html.twig #}

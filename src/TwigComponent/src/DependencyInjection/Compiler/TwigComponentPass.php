@@ -33,7 +33,7 @@ final class TwigComponentPass implements CompilerPassInterface
         foreach (array_keys($container->findTaggedServiceIds('twig.component')) as $id) {
             $componentDefinition = $container->findDefinition($id);
 
-            $attributes = (new \ReflectionClass($componentDefinition->getClass()))
+            $attributes = $container->getReflectionClass($componentDefinition->getClass())
                 ->getAttributes(AsTwigComponent::class, \ReflectionAttribute::IS_INSTANCEOF)
             ;
 
