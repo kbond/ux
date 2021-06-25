@@ -40,13 +40,15 @@ class AsTwigComponent
 
     /**
      * @internal
+     *
+     * @return static
      */
-    final public static function forClass(string $class): ?self
+    final public static function forClass(string $class): self
     {
         $class = new \ReflectionClass($class);
 
-        if (!$attribute = $class->getAttributes(self::class, \ReflectionAttribute::IS_INSTANCEOF)[0] ?? null) {
-            return null;
+        if (!$attribute = $class->getAttributes(static::class, \ReflectionAttribute::IS_INSTANCEOF)[0] ?? null) {
+            throw new \InvalidArgumentException(sprintf('"%s" is not a Twig Component, did you forget to add the "%s" attribute?', $class, static::class));
         }
 
         return $attribute->newInstance();

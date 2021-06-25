@@ -31,9 +31,7 @@ final class ComponentRenderer
     public function render(object $component): string
     {
         // TODO: Self-Rendering components?
-        if (!$attribute = AsTwigComponent::forClass($component::class)) {
-            throw new \InvalidArgumentException(sprintf('"%s" is not a Twig Component, did you forget to add the AsTwigComponent attribute?', $component::class));
-        }
+        $attribute = AsTwigComponent::forClass($component::class);
 
         return $this->twig->render($attribute->getTemplate(), ['this' => $component]);
     }
