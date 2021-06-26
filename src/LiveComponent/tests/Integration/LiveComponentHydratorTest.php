@@ -152,22 +152,6 @@ final class LiveComponentHydratorTest extends KernelTestCase
         $hydrator->hydrate($factory->get('component1'), ['_checksum' => 'invalid']);
     }
 
-    public function testCanCheckIfActionIsAllowed(): void
-    {
-        self::bootKernel();
-
-        /** @var LiveComponentHydrator $hydrator */
-        $hydrator = self::$container->get(LiveComponentHydrator::class);
-
-        /** @var ComponentFactory $factory */
-        $factory = self::$container->get(ComponentFactory::class);
-
-        $component = $factory->get('component1');
-
-        $this->assertTrue($hydrator->isActionAllowed($component, 'method1'));
-        $this->assertFalse($hydrator->isActionAllowed($component, 'method2'));
-    }
-
     public function testPreDehydrateAndPostHydrateHooksCalled(): void
     {
         self::bootKernel();

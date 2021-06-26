@@ -26,9 +26,7 @@ use Symfony\UX\LiveComponent\Attribute\PreDehydrate;
 #[AsLiveComponent('component2')]
 final class Component2
 {
-    /**
-     * @LiveProp
-     */
+    #[LiveProp]
     public int $count = 1;
 
     public bool $preDehydrateCalled = false;
@@ -37,41 +35,31 @@ final class Component2
 
     public bool $beforeReRenderCalled = false;
 
-    /**
-     * @LiveAction
-     */
+    #[LiveAction]
     public function increase(): void
     {
         ++$this->count;
     }
 
-    /**
-     * @LiveAction
-     */
+    #[LiveAction]
     public function redirect(UrlGeneratorInterface $urlGenerator): RedirectResponse
     {
         return new RedirectResponse($urlGenerator->generate('homepage'));
     }
 
-    /**
-     * @PreDehydrate()
-     */
+    #[PreDehydrate]
     public function preDehydrateMethod(): void
     {
         $this->preDehydrateCalled = true;
     }
 
-    /**
-     * @PostHydrate()
-     */
+    #[PostHydrate]
     public function postHydrateMethod(): void
     {
         $this->postHydrateCalled = true;
     }
 
-    /**
-     * @BeforeReRender()
-     */
+    #[BeforeReRender]
     public function beforeReRenderMethod(): void
     {
         $this->beforeReRenderCalled = true;

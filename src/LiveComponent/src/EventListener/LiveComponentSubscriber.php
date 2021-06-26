@@ -11,7 +11,6 @@
 
 namespace Symfony\UX\LiveComponent\EventListener;
 
-use Doctrine\Common\Annotations\Reader;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -29,7 +28,7 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\Service\ServiceSubscriberInterface;
-use Symfony\UX\LiveComponent\Attribute\BeforeReRender;
+use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\DefaultComponentController;
 use Symfony\UX\LiveComponent\LiveComponentHydrator;
 use Symfony\UX\TwigComponent\ComponentFactory;
@@ -61,7 +60,6 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             ComponentFactory::class,
             ComponentRenderer::class,
             LiveComponentHydrator::class,
-            Reader::class,
             '?'.CsrfTokenManagerInterface::class,
         ];
     }
@@ -99,7 +97,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             throw new BadRequestHttpException('Invalid CSRF token.');
         }
 
-        if (!array_key_exists($componentName, $this->componentServiceMap)) {
+        if (!\array_key_exists($componentName, $this->componentServiceMap)) {
             throw new NotFoundHttpException(sprintf('Component "%s" not found.', $componentName));
         }
 
@@ -132,8 +130,8 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             $component = $component->getComponent();
         }
 
-        if (null !== $action && !$this->container->get(LiveComponentHydrator::class)->isActionAllowed($component, $action)) {
-            throw new NotFoundHttpException(sprintf('The action "%s" either doesn\'t exist or is not allowed in "%s". Make sure it exist and has the LiveProp attribute/annotation above it.', $action, \get_class($component)));
+        if (null !== $action && !AsLiveComponent::isActionAllowed($component, $action)) {
+            throw new NotFoundHttpException(sprintf('The action "%s" either doesn\'t exist or is not allowed in "%s". Make sure it exist and has the LiveAction attribute above it.', $action, \get_class($component)));
         }
 
         $this->container->get(LiveComponentHydrator::class)->hydrate($component, $data);
@@ -214,7 +212,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
 
     private function createResponse(object $component, Request $request): Response
     {
-        foreach ($this->beforeReRenderMethods($component) as $method) {
+        foreach (AsLiveComponent::beforeReRenderMethods($component) as $method) {
             $component->{$method->name}();
         }
 
@@ -242,17 +240,5 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
     private function isLiveComponentJsonRequest(Request $request): bool
     {
         return \in_array($request->getPreferredFormat(), [self::JSON_FORMAT, 'json'], true);
-    }
-
-    /**
-     * @return \ReflectionMethod[]
-     */
-    private function beforeReRenderMethods(object $component): iterable
-    {
-        foreach ((new \ReflectionClass($component))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
-            if ($this->container->get(Reader::class)->getMethodAnnotation($method, BeforeReRender::class)) {
-                yield $method;
-            }
-        }
     }
 }

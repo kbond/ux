@@ -65,7 +65,6 @@ final class LiveComponentExtension extends Extension
             ->setArguments([
                 new TaggedIteratorArgument('twig.component.property_hydrator'),
                 new Reference('property_accessor'),
-                new Reference('annotation_reader'),
                 '%kernel.secret%',
             ])
         ;

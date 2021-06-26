@@ -20,14 +20,10 @@ use Symfony\UX\LiveComponent\Attribute\LiveProp;
 #[AsLiveComponent('component3')]
 final class Component3
 {
-    /**
-     * @LiveProp(fieldName="myProp1")
-     */
+    #[LiveProp(fieldName: 'myProp1')]
     public $prop1;
 
-    /**
-     * @LiveProp(fieldName="getProp2Name()")
-     */
+    #[LiveProp(fieldName: 'getProp2Name()')]
     public $prop2;
 
     public function getProp2Name(): string
