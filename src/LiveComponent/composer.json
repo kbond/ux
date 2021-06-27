@@ -27,7 +27,7 @@
     },
     "require": {
         "php": ">=8.0",
-        "symfony/ux-twig-component": "@dev"
+        "symfony/ux-twig-component": "^1.4"
     },
     "require-dev": {
         "symfony/framework-bundle": "^4.4|^5.0",
@@ -52,11 +52,5 @@
             "url": "https://github.com/symfony/ux"
         }
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../TwigComponent"
-        }
-    ],
     "minimum-stability": "dev"
 }
