@@ -67,6 +67,12 @@ jobs:
                   cd src/TwigComponent
                   composer update --prefer-lowest --prefer-dist --no-interaction --no-ansi --no-progress
                   php vendor/bin/simple-phpunit
+            - name: LiveComponent
+              run: |
+                  cd src/LiveComponent
+                  php ../../.github/build-packages.php
+                  composer update --prefer-lowest --prefer-dist --no-interaction --no-ansi --no-progress
+                  php vendor/bin/simple-phpunit
 
     tests-php-high-deps:
         runs-on: ubuntu-latest
@@ -104,14 +110,12 @@ jobs:
                   cd src/TwigComponent
                   composer update --prefer-dist --no-interaction --no-ansi --no-progress
                   php vendor/bin/simple-phpunit
-# TODO: re-enable once LiveComponent is updated to use attributes
-#            - name: LiveComponent
-#              run: |
-#                  cd src/LiveComponent
-#                  php ../../.github/build-packages.php
-#                  composer config platform.php 7.4.99
-#                  composer update --prefer-dist --no-interaction --no-ansi --no-progress
-#                  php vendor/bin/simple-phpunit
+            - name: LiveComponent
+              run: |
+                  cd src/LiveComponent
+                  php ../../.github/build-packages.php
+                  composer update --prefer-dist --no-interaction --no-ansi --no-progress
+                  php vendor/bin/simple-phpunit
 
     tests-js:
         runs-on: ubuntu-latest
