@@ -180,9 +180,10 @@ use Symfony\UX\LiveComponent\Attribute\LiveProp;
 #[AsLiveComponent('random_number')]
 class RandomNumberComponent
 {
-    /** @LiveProp */
+    #[LiveProp]
     public int $min = 0;
-    /** @LiveProp */
+
+    #[LiveProp]
     public int $max = 1000;
 
     public function getRandomNumber(): string
@@ -201,14 +202,14 @@ when rendering the component:
 {{ component('random_number', { min: 5, max: 500 }) }}
 ```
 
-But what's up with those `@LiveProp` annotations? A property with
-the `@LiveProp` annotation (or `LiveProp` PHP 8 attribute) becomes
-a "stateful" property for this component. In other words, each time
-we click the "Generate a new number!" button, when the component
-re-renders, it will _remember_ the original values for the `$min` and
-`$max` properties and generate a random number between 5 and 500.
-If you forgot to add `@LiveProp`, when the component re-rendered,
-those two values would _not_ be set on the object.
+But what's up with those `LiveProp` attributes? A property with
+the `LiveProp` attribute becomes a "stateful" property for this
+component. In other words, each time  we click the "Generate a
+new number!" button, when the component re-renders, it will
+_remember_ the original values for the `$min` and `$max` properties
+and generate a random number between 5 and 500. If you forgot to
+add `LiveProp`, when the component re-rendered, those two values
+would _not_ be set on the object.
 
 In short: LiveProps are "stateful properties": they will always
 be set when rendering. Most properties will be LiveProps, with
@@ -264,11 +265,12 @@ the `writable=true` option:
 
 class RandomNumberComponent
 {
--    /** @LiveProp() */
-+    /** @LiveProp(writable=true) */
+-    #[LiveProp]
++    #[LiveProp(writable: true)]
     public int $min = 0;
--    /** @LiveProp() */
-+    /** @LiveProp(writable=true) */
+
+-   #[LiveProp]
++   #[LiveProp(writable: true)]
     public int $max = 1000;
 
     // ...
@@ -423,8 +425,8 @@ want to add a "Reset Min/Max" button to our "random number"
 component that, when clicked, sets the min/max numbers back
 to a default value.
 
-First, add a method with a `LiveAction` annotation (or PHP 8 attribute)
-above it that does the work:
+First, add a method with a `LiveAction` attribute above it that
+does the work:
 
 ```php
 // src/Components/RandomNumberComponent.php
@@ -437,9 +439,7 @@ class RandomNumberComponent
 {
     // ...
 
-    /**
-     * @LiveAction
-     */
+    #[LiveAction]
     public function resetMinMax()
     {
         $this->min = 0;
@@ -502,9 +502,7 @@ class RandomNumberComponent
 {
     // ...
 
-    /**
-     * @LiveAction
-     */
+    #[LiveAction]
     public function resetMinMax(LoggerInterface $logger)
     {
         $this->min = 0;
@@ -547,9 +545,7 @@ class RandomNumberComponent extends AbstractController
 {
     // ...
 
-    /**
-     * @LiveAction
-     */
+    #[LiveAction]
     public function resetMinMax()
     {
         // ...
@@ -698,9 +694,8 @@ class PostFormComponent extends AbstractController
      * the form renders fields with names like `name="post[title]"`.
      * We set fieldName="" so that this live prop doesn't collide
      * with that data. The value - initialFormData - could be anything.
-     *
-     * @LiveProp(fieldName="initialFormData")
      */
+    #[LiveProp(fieldName: 'initialFormData')]
     public ?Post $post = null;
 
     /**
@@ -870,9 +865,7 @@ class PostFormComponent extends AbstractController
 {
     // ...
 
-    /**
-     * @LiveAction()
-     */
+    #[LiveAction]
     public function save(EntityManagerInterface $entityManager)
     {
         // shortcut to submit the form with form values
@@ -929,9 +922,7 @@ use Symfony\UX\LiveComponent\Attribute\LiveProp;
 #[AsLiveComponent('edit_post')]
 class EditPostComponent
 {
-    /**
-     * @LiveProp()
-     */
+    #[LiveProp]
     public Post $post;
 }
 ```
@@ -974,10 +965,8 @@ you can enable it via the `exposed` option:
 
 class EditPostComponent
 {
-    /**
--     * @LiveProp(exposed={})
-+     * @LiveProp(exposed={"title", "content"})
-     */
+-   #[LiveProp]
++   #[LiveProp(exposed: ['title', 'content'])]
     public Post $post;
 
     // ...
@@ -1017,21 +1006,17 @@ class EditUserComponent
 {
     use ValidatableComponentTrait;
 
-    /**
-     * @LiveProp(exposed={"email", "plainPassword"})
-     * @Assert\Valid()
-     */
+    #[LiveProp(exposed: ['email', 'plainPassword'])]
+    #[Assert\Valid]
     public User $user;
 
-    /**
-     * @LiveProp()
-     * @Assert\IsTrue()
-     */
+     #[LiveProp]
+     #[Assert\IsTrue]
     public bool $agreeToTerms = false;
 }
 ```
 
-Be sure to add the `@Assert\IsValid` to any property where you want
+Be sure to add the `Assert\IsValid` to any property where you want
 the object on that property to also be validated.
 
 Thanks to this setup, the component will now be automatically validated
@@ -1051,9 +1036,7 @@ class EditUserComponent
 {
     // ...
 
-    /**
-     * @LiveAction()
-     */
+    #[LiveAction]
     public function save()
     {
         // this will throw an exception if validation fails
