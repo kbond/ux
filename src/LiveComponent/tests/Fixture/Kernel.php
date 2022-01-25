@@ -68,9 +68,9 @@ final class Kernel extends BaseKernel
 
         if (self::VERSION_ID < 50300) {
             // add tag manually
-            $componentA->addTag('twig.component', ['key' => 'component1'])->addTag('controller.service_arguments');
-            $componentB->addTag('twig.component', ['key' => 'component2', 'default_action' => 'defaultAction'])->addTag('controller.service_arguments');
-            $componentC->addTag('twig.component', ['key' => 'component3'])->addTag('controller.service_arguments');
+            $componentA->addTag('twig.component', ['key' => 'component1', 'live' => true])->addTag('controller.service_arguments');
+            $componentB->addTag('twig.component', ['key' => 'component2', 'live' => true, 'default_action' => 'defaultAction'])->addTag('controller.service_arguments');
+            $componentC->addTag('twig.component', ['key' => 'component3', 'live' => true])->addTag('controller.service_arguments');
         }
 
         $sessionConfig = self::VERSION_ID < 50300 ? ['storage_id' => 'session.storage.mock_file'] : ['storage_factory_id' => 'session.storage.factory.mock_file'];

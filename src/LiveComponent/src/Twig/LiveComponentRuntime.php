@@ -37,11 +37,19 @@ final class LiveComponentRuntime
         $this->csrfTokenManager = $csrfTokenManager;
     }
 
-    public function renderLiveAttributes(Environment $env, object $component, string $name = null): string
+    public function renderLiveAttributes(Environment $env, array $context): string
     {
-        $name = $this->nameFor($component, $name);
+        if (!isset($context['_component_config'])) {
+            throw new \LogicException('init_live_component can only be called within a component template.');
+        }
+
+        if (!isset($context['_component_config']['live'])) {
+            throw new \LogicException(sprintf('"%s" is not a Live Component.', $context['_component_config']['class']));
+        }
+
+        $name = $context['_component_config']['name'];
         $url = $this->urlGenerator->generate('live_component', ['component' => $name]);
-        $data = $this->hydrator->dehydrate($component);
+        $data = $this->hydrator->dehydrate($context['this']);
 
         $ret = sprintf(
             'data-controller="live" data-live-url-value="%s" data-live-data-value="%s"',
@@ -62,13 +70,8 @@ final class LiveComponentRuntime
     public function getComponentUrl(object $component, string $name = null): string
     {
         $data = $this->hydrator->dehydrate($component);
-        $params = ['component' => $this->nameFor($component, $name)] + $data;
+        $params = ['component' => $this->factory->configFor($name ?? $component)] + $data;
 
         return $this->urlGenerator->generate('live_component', $params);
-    }
-
-    private function nameFor(object $component, string $name = null): string
-    {
-        return $this->factory->configFor($component, $name)['name'];
     }
 }

@@ -190,7 +190,7 @@ final class ComponentFactoryTest extends KernelTestCase
                 'class' => ComponentB::class,
                 'name' => 'component_d',
             ],
-            $factory->configFor(new ComponentB(), 'component_d')
+            $factory->configFor('component_d')
         );
     }
 
@@ -200,7 +200,7 @@ final class ComponentFactoryTest extends KernelTestCase
         $factory = self::getContainer()->get('ux.twig_component.component_factory');
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectDeprecationMessage(sprintf('2 "%s" components registered with names "component_b, component_d". Use the $name parameter to explicitly choose one.', ComponentB::class));
+        $this->expectDeprecationMessage(sprintf('2 "%s" components registered with names "component_b, component_d". Use the component name to explicitly choose one.', ComponentB::class));
 
         $factory->configFor(new ComponentB());
     }
@@ -225,5 +225,16 @@ final class ComponentFactoryTest extends KernelTestCase
         $this->expectExceptionMessage('Unknown component class "Symfony\UX\TwigComponent\Tests\Integration\ComponentFactoryTest". The registered components are: component_a, component_b, component_c, component_d');
 
         $factory->configFor(self::class);
+    }
+
+    public function testCannotGetInvalidComponent(): void
+    {
+        /** @var ComponentFactory $factory */
+        $factory = self::getContainer()->get('ux.twig_component.component_factory');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown component "invalid". The registered components are: component_a');
+
+        $factory->get('invalid');
     }
 }

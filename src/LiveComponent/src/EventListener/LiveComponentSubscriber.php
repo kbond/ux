@@ -77,7 +77,11 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             throw new NotFoundHttpException(sprintf('Component "%s" not found.', $componentName), $e);
         }
 
-        $request->attributes->set('_component_template', $config['template']);
+        if (!isset($config['live'])) {
+            throw new NotFoundHttpException(sprintf('"%s" is not a Live Component.', $config['class']));
+        }
+
+        $request->attributes->set('_component_config', $config);
 
         if ('get' === $action) {
             $defaultAction = trim($config['default_action'] ?? '__invoke', '()');
@@ -221,7 +225,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
 
         $html = $this->container->get(ComponentRenderer::class)->render(
             $component,
-            $request->attributes->get('_component_template')
+            $request->attributes->get('_component_config')
         );
 
         return new Response($html);

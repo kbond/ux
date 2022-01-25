@@ -47,6 +47,7 @@ final class LiveComponentExtension extends Extension
                             'key' => $attribute->name,
                             'template' => $attribute->template,
                             'default_action' => $attribute->defaultAction,
+                            'live' => true,
                         ]))
                         ->addTag('controller.service_arguments')
                     ;
