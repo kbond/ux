@@ -36,36 +36,32 @@ final class ComponentFactory
     }
 
     /**
-     * @param string|object $component Component name as string or component object
+     * @param string|object $name Component name, component object or component FQCN
      */
-    public function configFor($component, string $name = null): array
+    public function configFor(string|object $name): array
     {
-        if (\is_object($component)) {
-            $component = \get_class($component);
+        if (\is_object($name)) {
+            $name = \get_class($name);
         }
 
-        if (!$name && class_exists($component)) {
+        if (class_exists($name)) {
             $configs = [];
 
             foreach ($this->config as $config) {
-                if ($component === $config['class']) {
+                if ($name === $config['class']) {
                     $configs[] = $config;
                 }
             }
 
             if (0 === \count($configs)) {
-                throw new \InvalidArgumentException(sprintf('Unknown component class "%s". The registered components are: %s', $component, implode(', ', array_keys($this->config))));
+                throw new \InvalidArgumentException(sprintf('Unknown component class "%s". The registered components are: %s', $name, implode(', ', array_keys($this->config))));
             }
 
             if (\count($configs) > 1) {
-                throw new \InvalidArgumentException(sprintf('%d "%s" components registered with names "%s". Use the $name parameter to explicitly choose one.', \count($configs), $component, implode(', ', array_column($configs, 'name'))));
+                throw new \InvalidArgumentException(sprintf('%d "%s" components registered with names "%s". Use the component name to explicitly choose one.', \count($configs), $name, implode(', ', array_column($configs, 'name'))));
             }
 
             $name = $configs[0]['name'];
-        }
-
-        if (!$name) {
-            $name = $component;
         }
 
         if (!\array_key_exists($name, $this->config)) {
@@ -78,7 +74,7 @@ final class ComponentFactory
     /**
      * Creates the component and "mounts" it with the passed data.
      */
-    public function create(string $name, array $data = []): object
+    public function create(string $name, array $data = []): MountedComponent
     {
         $component = $this->getComponent($name);
         $data = $this->preMount($component, $data);
@@ -87,14 +83,28 @@ final class ComponentFactory
 
         // set data that wasn't set in mount on the component directly
         foreach ($data as $property => $value) {
-            if (!$this->propertyAccessor->isWritable($component, $property)) {
-                throw new \LogicException(sprintf('Unable to write "%s" to component "%s". Make sure this is a writable property or create a mount() with a $%s argument.', $property, \get_class($component), $property));
-            }
+            if ($this->propertyAccessor->isWritable($component, $property)) {
+                $this->propertyAccessor->setValue($component, $property, $value);
 
-            $this->propertyAccessor->setValue($component, $property, $value);
+                unset($data[$property]);
+            }
         }
 
-        return $component;
+        // create attributes from "attributes" key if exists
+        $attributes = new ComponentAttributes($data['attributes'] ?? []);
+        unset($data['attributes']);
+
+        // ensure remaining data is scalar
+        foreach ($data as $key => $value) {
+            if (!is_scalar($value)) {
+                throw new \LogicException(sprintf('Unable to use "%s" (%s) as an attribute. Attributes must be scalar. If you meant to mount this value on "%s", make sure $%s is a writable property.', $key, get_debug_type($value), $component::class, $key));
+            }
+        }
+
+        // add remaining data as attributes
+        $attributes = $attributes->merge($data);
+
+        return new MountedComponent($component, $attributes, $this->configFor($name));
     }
 
     /**

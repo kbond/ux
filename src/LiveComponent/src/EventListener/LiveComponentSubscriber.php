@@ -31,6 +31,7 @@ use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\LiveComponentHydrator;
 use Symfony\UX\TwigComponent\ComponentFactory;
 use Symfony\UX\TwigComponent\ComponentRenderer;
+use Symfony\UX\TwigComponent\MountedComponent;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
@@ -77,7 +78,11 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             throw new NotFoundHttpException(sprintf('Component "%s" not found.', $componentName), $e);
         }
 
-        $request->attributes->set('_component_template', $config['template']);
+        if (!isset($config['live'])) {
+            throw new NotFoundHttpException(sprintf('"%s" is not a Live Component.', $config['class']));
+        }
+
+        $request->attributes->set('_component_config', $config);
 
         if ('get' === $action) {
             $defaultAction = trim($config['default_action'] ?? '__invoke', '()');
@@ -135,13 +140,15 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             throw new NotFoundHttpException(sprintf('The action "%s" either doesn\'t exist or is not allowed in "%s". Make sure it exist and has the LiveAction attribute above it.', $action, \get_class($component)));
         }
 
-        $this->container->get(LiveComponentHydrator::class)->hydrate($component, $data);
+        $mountedComponent = $this->container->get(LiveComponentHydrator::class)
+            ->hydrate($component, $data, $request->attributes->get('_component_config'))
+        ;
 
         // extra variables to be made available to the controller
         // (for "actions" only)
         parse_str($request->query->get('values'), $values);
         $request->attributes->add($values);
-        $request->attributes->set('_component', $component);
+        $request->attributes->set('_mounted_component', $mountedComponent);
     }
 
     public function onKernelView(ViewEvent $event): void
@@ -151,7 +158,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             return;
         }
 
-        $response = $this->createResponse($request->attributes->get('_component'), $request);
+        $response = $this->createResponse($request->attributes->get('_mounted_component'));
 
         $event->setResponse($response);
     }
@@ -168,14 +175,14 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             return;
         }
 
-        $component = $request->attributes->get('_component');
+        $component = $request->attributes->get('_mounted_component');
 
         // in case the exception was too early somehow
         if (!$component) {
             return;
         }
 
-        $response = $this->createResponse($component, $request);
+        $response = $this->createResponse($component);
         $event->setResponse($response);
     }
 
@@ -213,16 +220,15 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
         ];
     }
 
-    private function createResponse(object $component, Request $request): Response
+    private function createResponse(MountedComponent $mountedComponent): Response
     {
+        $component = $mountedComponent->component;
+
         foreach (AsLiveComponent::beforeReRenderMethods($component) as $method) {
             $component->{$method->name}();
         }
 
-        $html = $this->container->get(ComponentRenderer::class)->render(
-            $component,
-            $request->attributes->get('_component_template')
-        );
+        $html = $this->container->get(ComponentRenderer::class)->render($mountedComponent);
 
         return new Response($html);
     }

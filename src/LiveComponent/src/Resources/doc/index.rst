@@ -46,7 +46,7 @@ A real-time product search component might look like this::
 .. code-block:: twig
 
     {# templates/components/product_search.html.twig #}
-    <div {{ init_live_component(this) }}>
+    <div {{ init_live_component() }}>
         <input
             type="search"
             name="query"
@@ -165,7 +165,7 @@ initialize the Stimulus controller:
 .. code-block:: diff
 
     - <div>
-    + <div {{ init_live_component(this) }}>
+    + <div {{ init_live_component() }}>
           <strong>{{ this.randomNumber }}</strong>
       </div>
 
@@ -176,7 +176,7 @@ and give the user a new random number:
 
 .. code-block:: twig
 
-    <div {{ init_live_component(this) }}>
+    <div {{ init_live_component() }}>
         <strong>{{ this.randomNumber }}</strong>
 
         <button
@@ -251,7 +251,7 @@ Let's add two inputs to our template:
 .. code-block:: twig
 
     {# templates/components/random_number.html.twig #}
-    <div {{ init_live_component(this) }}>
+    <div {{ init_live_component() }}>
         <input
             type="number"
             value="{{ min }}"
@@ -368,7 +368,7 @@ property. The following code works identically to the previous example:
 
 .. code-block:: diff
 
-      <div {{ init_live_component(this)>
+      <div {{ init_live_component()>
           <input
               type="number"
               value="{{ min }}"
@@ -755,7 +755,7 @@ as ``this.form`` thanks to the trait:
 
     {# templates/components/post_form.html.twig #}
     <div
-        {{ init_live_component(this) }}
+        {{ init_live_component() }}
         {#
             Automatically catch all "change" events from the fields
             below and re-render the component.
@@ -779,7 +779,7 @@ as ``this.form`` thanks to the trait:
     </div>
 
 Mostly, this is a pretty boring template! It includes the normal
-``init_live_component(this)`` and then you render the form however you
+``init_live_component()`` and then you render the form however you
 want.
 
 But the result is incredible! As you finish changing each field, the
@@ -988,7 +988,7 @@ section above) is to add:
 .. code-block:: diff
 
       <div
-          {{ init_live_component(this) }}
+          {{ init_live_component() }}
     +     data-action="change->live#update"
       >
 
@@ -1020,7 +1020,7 @@ rendered the ``content`` through a Markdown filter from the
 
 .. code-block:: twig
 
-    <div {{init_live_component(this)}}>
+    <div {{init_live_component()}}>
         <input
             type="text"
             value="{{ post.title }}"
@@ -1185,7 +1185,7 @@ You can also use “polling” to continually refresh a component. On the
 .. code-block:: diff
 
       <div
-          {{ init_live_component(this) }}
+          {{ init_live_component() }}
     +     data-poll
       >
 
@@ -1197,7 +1197,7 @@ delay for 500ms:
 .. code-block:: twig
 
     <div
-        {{ init_live_component(this) }}
+        {{ init_live_component() }}
         data-poll="delay(500)|$render"
     >
 
@@ -1206,7 +1206,7 @@ You can also trigger a specific “action” instead of a normal re-render:
 .. code-block:: twig
 
     <div
-        {{ init_live_component(this) }}
+        {{ init_live_component() }}
 
         data-poll="save"
         {#
@@ -1401,7 +1401,7 @@ In the ``EditPostComponent`` template, you render the
 .. code-block:: twig
 
     {# templates/components/edit_post.html.twig #}
-    <div {{ init_live_component(this) }}>
+    <div {{ init_live_component() }}>
         <input
             type="text"
             name="post[title]"
@@ -1423,7 +1423,7 @@ In the ``EditPostComponent`` template, you render the
 
 .. code-block:: twig
 
-    <div {{ init_live_component(this) }} class="mb-3">
+    <div {{ init_live_component() }} class="mb-3">
         <textarea
             name="{{ name }}"
             data-model="value"
