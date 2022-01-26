@@ -11,6 +11,8 @@
 
 namespace Symfony\UX\TwigComponent;
 
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\UX\TwigComponent\EventListener\PreRenderEvent;
 use Twig\Environment;
 use Twig\Extension\EscaperExtension;
 
@@ -23,7 +25,7 @@ final class ComponentRenderer
 {
     private bool $safeClassesRegistered = false;
 
-    public function __construct(private Environment $twig)
+    public function __construct(private Environment $twig, private EventDispatcherInterface $dispatcher)
     {
     }
 
@@ -34,6 +36,8 @@ final class ComponentRenderer
 
             $this->safeClassesRegistered = true;
         }
+
+        $this->dispatcher->dispatch(new PreRenderEvent($mountedComponent));
 
         return $this->twig->render($mountedComponent->template, array_merge(
             [
