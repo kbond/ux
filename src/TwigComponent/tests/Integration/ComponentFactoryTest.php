@@ -31,10 +31,10 @@ final class ComponentFactoryTest extends KernelTestCase
         $factory = self::getContainer()->get('ux.twig_component.component_factory');
 
         /** @var ComponentA $componentA */
-        $componentA = $factory->create('component_a', ['propA' => 'A', 'propB' => 'B']);
+        $componentA = $factory->create('component_a', ['propA' => 'A', 'propB' => 'B'])->component;
 
         /** @var ComponentA $componentB */
-        $componentB = $factory->create('component_a', ['propA' => 'C', 'propB' => 'D']);
+        $componentB = $factory->create('component_a', ['propA' => 'C', 'propB' => 'D'])->component;
 
         $this->assertNotSame(spl_object_id($componentA), spl_object_id($componentB));
         $this->assertSame(spl_object_id($componentA->getService()), spl_object_id($componentB->getService()));
@@ -79,7 +79,7 @@ final class ComponentFactoryTest extends KernelTestCase
         $component = $factory->create('component_c', [
             'propA' => 'valueA',
             'propC' => 'valueC',
-        ]);
+        ])->component;
 
         $this->assertSame('valueA', $component->propA);
         $this->assertNull($component->propB);
@@ -89,7 +89,7 @@ final class ComponentFactoryTest extends KernelTestCase
         $component = $factory->create('component_c', [
             'propA' => 'valueA',
             'propB' => 'valueB',
-        ]);
+        ])->component;
 
         $this->assertSame('valueA', $component->propA);
         $this->assertSame('valueB', $component->propB);
@@ -113,9 +113,9 @@ final class ComponentFactoryTest extends KernelTestCase
         $factory = self::getContainer()->get('ux.twig_component.component_factory');
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to write "service" to component "Symfony\UX\TwigComponent\Tests\Fixture\Component\ComponentA". Make sure this is a writable property or create a mount() with a $service argument.');
+        $this->expectExceptionMessage(sprintf('Unable to use "service" (array) as an attribute. Attributes must be scalar. If you meant to mount this value on "%s", make sure $service is a writable property.', ComponentA::class));
 
-        $factory->create('component_a', ['propB' => 'B', 'service' => 'invalid']);
+        $factory->create('component_a', ['propB' => 'B', 'service' => ['invalid']]);
     }
 
     public function testTwigComponentServiceTagMustHaveKey(): void

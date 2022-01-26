@@ -74,7 +74,7 @@ final class ComponentFactory
     /**
      * Creates the component and "mounts" it with the passed data.
      */
-    public function create(string $name, array $data = []): object
+    public function create(string $name, array $data = []): MountedComponent
     {
         $component = $this->getComponent($name);
         $data = $this->preMount($component, $data);
@@ -83,14 +83,28 @@ final class ComponentFactory
 
         // set data that wasn't set in mount on the component directly
         foreach ($data as $property => $value) {
-            if (!$this->propertyAccessor->isWritable($component, $property)) {
-                throw new \LogicException(sprintf('Unable to write "%s" to component "%s". Make sure this is a writable property or create a mount() with a $%s argument.', $property, \get_class($component), $property));
-            }
+            if ($this->propertyAccessor->isWritable($component, $property)) {
+                $this->propertyAccessor->setValue($component, $property, $value);
 
-            $this->propertyAccessor->setValue($component, $property, $value);
+                unset($data[$property]);
+            }
         }
 
-        return $component;
+        // create attributes from "attributes" key if exists
+        $attributes = new ComponentAttributes($data['attributes'] ?? []);
+        unset($data['attributes']);
+
+        // ensure remaining data is scalar
+        foreach ($data as $key => $value) {
+            if (!is_scalar($value)) {
+                throw new \LogicException(sprintf('Unable to use "%s" (%s) as an attribute. Attributes must be scalar. If you meant to mount this value on "%s", make sure $%s is a writable property.', $key, get_debug_type($value), $component::class, $key));
+            }
+        }
+
+        // add remaining data as attributes
+        $attributes = $attributes->merge($data);
+
+        return new MountedComponent($component, $attributes, $this->configFor($name));
     }
 
     /**

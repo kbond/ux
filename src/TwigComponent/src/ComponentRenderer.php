@@ -12,6 +12,7 @@
 namespace Symfony\UX\TwigComponent;
 
 use Twig\Environment;
+use Twig\Extension\EscaperExtension;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
@@ -20,18 +21,27 @@ use Twig\Environment;
  */
 final class ComponentRenderer
 {
-    private Environment $twig;
+    private bool $safeClassesRegistered = false;
 
-    public function __construct(Environment $twig)
+    public function __construct(private Environment $twig)
     {
-        $this->twig = $twig;
     }
 
-    public function render(object $component, array $config): string
+    public function render(MountedComponent $mountedComponent): string
     {
-        return $this->twig->render($config['template'], array_merge(
-            ['this' => $component, '_component_config' => $config],
-            get_object_vars($component)
+        if (!$this->safeClassesRegistered) {
+            $this->twig->getExtension(EscaperExtension::class)->addSafeClass(ComponentAttributes::class, ['html']);
+
+            $this->safeClassesRegistered = true;
+        }
+
+        return $this->twig->render($mountedComponent->template, array_merge(
+            [
+                'this' => $mountedComponent->component,
+                'attributes' => $mountedComponent->attributes,
+                '_component_config' => $mountedComponent->config(),
+            ],
+            get_object_vars($mountedComponent->component)
         ));
     }
 }
