@@ -15,6 +15,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\UX\LiveComponent\LiveComponentHydrator;
 use Symfony\UX\TwigComponent\ComponentFactory;
+use Symfony\UX\TwigComponent\MountedComponent;
 use Twig\Environment;
 
 /**
@@ -39,17 +40,20 @@ final class LiveComponentRuntime
 
     public function renderLiveAttributes(Environment $env, array $context): string
     {
-        if (!isset($context['_component_config'])) {
+        if (!isset($context['_mounted_component'])) {
             throw new \LogicException('init_live_component can only be called within a component template.');
         }
 
-        if (!isset($context['_component_config']['live'])) {
-            throw new \LogicException(sprintf('"%s" is not a Live Component.', $context['_component_config']['class']));
+        /** @var MountedComponent $mountedComponent */
+        $mountedComponent = $context['_mounted_component'];
+
+        if (!isset($mountedComponent->config()['live'])) {
+            throw new \LogicException(sprintf('"%s" is not a Live Component.', $mountedComponent->config()['class']));
         }
 
-        $name = $context['_component_config']['name'];
+        $name = $mountedComponent->config()['name'];
         $url = $this->urlGenerator->generate('live_component', ['component' => $name]);
-        $data = $this->hydrator->dehydrate($context['this']);
+        $data = $this->hydrator->dehydrate($mountedComponent);
 
         $ret = sprintf(
             'data-controller="live" data-live-url-value="%s" data-live-data-value="%s"',

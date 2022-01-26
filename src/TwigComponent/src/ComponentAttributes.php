@@ -16,7 +16,7 @@ namespace Symfony\UX\TwigComponent;
  *
  * @experimental
  */
-final class ComponentAttributes
+final class ComponentAttributes implements \Countable
 {
     /**
      * @param array<string, string> $attributes
@@ -65,5 +65,10 @@ final class ComponentAttributes
         }
 
         return new self($defaults);
+    }
+
+    public function count(): int
+    {
+        return \count($this->attributes);
     }
 }

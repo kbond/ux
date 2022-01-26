@@ -39,7 +39,7 @@ final class ComponentRenderer
             [
                 'this' => $mountedComponent->component,
                 'attributes' => $mountedComponent->attributes,
-                '_component_config' => $mountedComponent->config(),
+                '_mounted_component' => $mountedComponent,
             ],
             get_object_vars($mountedComponent->component)
         ));
