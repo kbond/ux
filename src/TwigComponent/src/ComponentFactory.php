@@ -65,11 +65,22 @@ final class ComponentFactory
 
         $data = $this->postMount($component, $data);
 
-        foreach ($data as $property => $value) {
-            throw new \LogicException(sprintf('Unable to write "%s" to component "%s". Make sure this is a writable property or create a mount() with a $%s argument.', $property, \get_class($component), $property));
+        // create attributes from "attributes" key if exists
+        $attributes = $data['attributes'] ?? [];
+        unset($data['attributes']);
+
+        // ensure remaining data is scalar
+        foreach ($data as $key => $value) {
+            if (!is_scalar($value)) {
+                throw new \LogicException(sprintf('Unable to use "%s" (%s) as an attribute. Attributes must be scalar. If you meant to mount this value on "%s", make sure $%s is a writable property.', $key, get_debug_type($value), $component::class, $key));
+            }
         }
 
-        return new MountedComponent($component, $this->metadataFor($name));
+        return new MountedComponent(
+            $component,
+            new ComponentAttributes(array_merge($attributes, $data)),
+            $this->metadataFor($name)
+        );
     }
 
     /**
