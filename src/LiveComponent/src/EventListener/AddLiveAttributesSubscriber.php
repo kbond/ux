@@ -27,7 +27,7 @@ final class AddLiveAttributesSubscriber implements EventSubscriberInterface, Ser
 
         /** @var ComponentAttributes $attributes */
         $attributes = $this->container->get(LiveComponentRuntime::class)
-            ->getLiveAttributes($event->getComponent(), $event->getMetadata())
+            ->getLiveAttributes($event->getMountedComponent())
         ;
 
         $variables = $event->getVariables();

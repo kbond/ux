@@ -29,7 +29,7 @@ final class ComponentRenderer
     {
     }
 
-    public function render(object $component, ComponentMetadata $metadata): string
+    public function render(MountedComponent $mounted): string
     {
         if (!$this->safeClassesRegistered) {
             $this->twig->getExtension(EscaperExtension::class)->addSafeClass(ComponentAttributes::class, ['html']);
@@ -37,13 +37,7 @@ final class ComponentRenderer
             $this->safeClassesRegistered = true;
         }
 
-        $event = new PreRenderEvent(
-            $component,
-            $metadata,
-            array_merge(['this' => $component], get_object_vars($component))
-        );
-
-        $this->dispatcher->dispatch($event);
+        $this->dispatcher->dispatch($event = new PreRenderEvent($mounted));
 
         return $this->twig->render($event->getTemplate(), $event->getVariables());
     }
