@@ -17,6 +17,7 @@ use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LivePropContext;
 use Symfony\UX\LiveComponent\Exception\UnsupportedHydrationException;
+use Symfony\UX\TwigComponent\ComponentAttributes;
 use Symfony\UX\TwigComponent\ComponentMetadata;
 use Symfony\UX\TwigComponent\MountedComponent;
 
@@ -31,6 +32,7 @@ final class LiveComponentHydrator
 {
     private const CHECKSUM_KEY = '_checksum';
     private const EXPOSED_PROP_KEY = '_id';
+    private const ATTRIBUTES_KEY = '_attributes';
 
     /** @var PropertyHydratorInterface[] */
     private iterable $propertyHydrators;
@@ -104,6 +106,11 @@ final class LiveComponentHydrator
             }
         }
 
+        if ($attributes = $mounted->getAttributes()->all()) {
+            $data[self::ATTRIBUTES_KEY] = $attributes;
+            $readonlyProperties[] = self::ATTRIBUTES_KEY;
+        }
+
         $data[self::CHECKSUM_KEY] = $this->computeChecksum($data, $readonlyProperties);
 
         return $data;
@@ -112,6 +119,10 @@ final class LiveComponentHydrator
     public function hydrate(object $component, array $data, ComponentMetadata $metadata): MountedComponent
     {
         $readonlyProperties = [];
+
+        if (isset($data[self::ATTRIBUTES_KEY])) {
+            $readonlyProperties[] = self::ATTRIBUTES_KEY;
+        }
 
         /** @var LivePropContext[] $propertyContexts */
         $propertyContexts = iterator_to_array(AsLiveComponent::liveProps($component));
@@ -133,7 +144,9 @@ final class LiveComponentHydrator
 
         $this->verifyChecksum($data, $readonlyProperties);
 
-        unset($data[self::CHECKSUM_KEY]);
+        $attributes = new ComponentAttributes($data[self::ATTRIBUTES_KEY] ?? []);
+
+        unset($data[self::CHECKSUM_KEY], $data[self::ATTRIBUTES_KEY]);
 
         foreach ($propertyContexts as $context) {
             $property = $context->reflectionProperty();
@@ -192,7 +205,7 @@ final class LiveComponentHydrator
             $component->{$method->name}();
         }
 
-        return new MountedComponent($component, $metadata);
+        return new MountedComponent($component, $attributes, $metadata);
     }
 
     private function computeChecksum(array $data, array $readonlyProperties): string

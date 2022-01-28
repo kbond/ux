@@ -105,15 +105,15 @@ final class ComponentFactoryTest extends KernelTestCase
         $factory->create('component_c');
     }
 
-    public function testExceptionThrownIfUnableToWritePassedDataToProperty(): void
+    public function testExceptionThrownIfUnableToWritePassedDataToPropertyAndIsNotScalar(): void
     {
         /** @var ComponentFactory $factory */
         $factory = self::getContainer()->get('ux.twig_component.component_factory');
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unable to write "service" to component "Symfony\UX\TwigComponent\Tests\Fixture\Component\ComponentA". Make sure this is a writable property or create a mount() with a $service argument.');
+        $this->expectExceptionMessage(sprintf('Unable to use "service" (stdClass) as an attribute. Attributes must be scalar. If you meant to mount this value on "%s", make sure $service is a writable property.', ComponentA::class));
 
-        $factory->create('component_a', ['propB' => 'B', 'service' => 'invalid']);
+        $factory->create('component_a', ['propB' => 'B', 'service' => new \stdClass()]);
     }
 
     public function testTwigComponentServiceTagMustHaveKey(): void
