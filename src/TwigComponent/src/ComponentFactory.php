@@ -13,7 +13,9 @@ namespace Symfony\UX\TwigComponent;
 
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
+use Symfony\UX\TwigComponent\EventListener\PostMountEvent;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
@@ -24,14 +26,16 @@ final class ComponentFactory
 {
     private ServiceLocator $components;
     private PropertyAccessorInterface $propertyAccessor;
+    private EventDispatcherInterface $dispatcher;
 
     /** @var array<string, array> */
     private array $config;
 
-    public function __construct(ServiceLocator $components, PropertyAccessorInterface $propertyAccessor, array $config)
+    public function __construct(ServiceLocator $components, PropertyAccessorInterface $propertyAccessor, EventDispatcherInterface $dispatcher, array $config)
     {
         $this->components = $components;
         $this->propertyAccessor = $propertyAccessor;
+        $this->dispatcher = $dispatcher;
         $this->config = $config;
     }
 
@@ -65,11 +69,13 @@ final class ComponentFactory
 
         $data = $this->postMount($component, $data);
 
-        foreach ($data as $property => $value) {
+        $this->dispatcher->dispatch($event = new PostMountEvent($data));
+
+        foreach ($event->data as $property => $value) {
             throw new \LogicException(sprintf('Unable to write "%s" to component "%s". Make sure this is a writable property or create a mount() with a $%s argument.', $property, \get_class($component), $property));
         }
 
-        return new MountedComponent($component, $this->metadataFor($name));
+        return new MountedComponent($component, $event->extraData, $this->metadataFor($name));
     }
 
     /**

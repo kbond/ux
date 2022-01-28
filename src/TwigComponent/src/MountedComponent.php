@@ -20,7 +20,7 @@ namespace Symfony\UX\TwigComponent;
  */
 final class MountedComponent
 {
-    public function __construct(private object $component, private ComponentMetadata $metadata)
+    public function __construct(private object $component, private array $extraData, private ComponentMetadata $metadata)
     {
     }
 
@@ -36,6 +36,6 @@ final class MountedComponent
 
     public function getVariables(): array
     {
-        return array_merge(['this' => $this->component], get_object_vars($this->component));
+        return array_merge(['this' => $this->component], get_object_vars($this->component), $this->extraData);
     }
 }

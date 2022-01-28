@@ -22,6 +22,7 @@ use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 use Symfony\UX\TwigComponent\ComponentFactory;
 use Symfony\UX\TwigComponent\ComponentRenderer;
 use Symfony\UX\TwigComponent\DependencyInjection\Compiler\TwigComponentPass;
+use Symfony\UX\TwigComponent\EventListener\CreateAttributesSubscriber;
 use Symfony\UX\TwigComponent\Twig\ComponentExtension;
 use Symfony\UX\TwigComponent\Twig\ComponentRuntime;
 
@@ -48,6 +49,7 @@ final class TwigComponentExtension extends Extension
             ->setArguments([
                 new ServiceLocatorArgument(new TaggedIteratorArgument('twig.component', 'key', null, true)),
                 new Reference('property_accessor'),
+                new Reference('event_dispatcher'),
                 class_exists(AbstractArgument::class) ? new AbstractArgument(sprintf('Added in %s.', TwigComponentPass::class)) : [],
             ])
         ;
@@ -69,6 +71,10 @@ final class TwigComponentExtension extends Extension
                 new Reference('ux.twig_component.component_renderer'),
             ])
             ->addTag('twig.runtime')
+        ;
+
+        $container->register('ux.twig_component.create_attributes_subscriber', CreateAttributesSubscriber::class)
+            ->addTag('kernel.event_subscriber')
         ;
     }
 }
