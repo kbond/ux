@@ -47,7 +47,7 @@ final class ComponentFactory
     /**
      * Creates the component and "mounts" it with the passed data.
      */
-    public function create(string $name, array $data = []): object
+    public function create(string $name, array $data = []): MountedComponent
     {
         $component = $this->getComponent($name);
         $data = $this->preMount($component, $data);
@@ -69,7 +69,7 @@ final class ComponentFactory
             throw new \LogicException(sprintf('Unable to write "%s" to component "%s". Make sure this is a writable property or create a mount() with a $%s argument.', $property, \get_class($component), $property));
         }
 
-        return $component;
+        return new MountedComponent($component, $this->metadataFor($name));
     }
 
     /**

@@ -16,7 +16,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\UX\LiveComponent\LiveComponentHydrator;
 use Symfony\UX\TwigComponent\ComponentAttributes;
 use Symfony\UX\TwigComponent\ComponentFactory;
-use Symfony\UX\TwigComponent\ComponentMetadata;
+use Symfony\UX\TwigComponent\MountedComponent;
 use Twig\Environment;
 
 /**
@@ -37,16 +37,16 @@ final class LiveComponentRuntime
 
     public function getComponentUrl(string $name, array $props = []): string
     {
-        $component = $this->factory->create($name, $props);
-        $params = ['component' => $name] + $this->hydrator->dehydrate($component);
+        $mounted = $this->factory->create($name, $props);
+        $params = ['component' => $name] + $this->hydrator->dehydrate($mounted);
 
         return $this->urlGenerator->generate('live_component', $params);
     }
 
-    public function getLiveAttributes(object $component, ComponentMetadata $metadata): ComponentAttributes
+    public function getLiveAttributes(MountedComponent $mounted): ComponentAttributes
     {
-        $url = $this->urlGenerator->generate('live_component', ['component' => $metadata->getName()]);
-        $data = $this->hydrator->dehydrate($component);
+        $url = $this->urlGenerator->generate('live_component', ['component' => $mounted->getMetadata()->getName()]);
+        $data = $this->hydrator->dehydrate($mounted);
 
         $attributes = [
             'data-controller' => 'live',
@@ -55,7 +55,7 @@ final class LiveComponentRuntime
         ];
 
         if ($this->csrfTokenManager) {
-            $attributes['data-live-csrf-value'] = $this->csrfTokenManager->getToken($metadata->getName())->getValue();
+            $attributes['data-live-csrf-value'] = $this->csrfTokenManager->getToken($mounted->getMetadata()->getName())->getValue();
         }
 
         return new ComponentAttributes($attributes);

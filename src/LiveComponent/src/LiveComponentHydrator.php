@@ -17,6 +17,8 @@ use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LivePropContext;
 use Symfony\UX\LiveComponent\Exception\UnsupportedHydrationException;
+use Symfony\UX\TwigComponent\ComponentMetadata;
+use Symfony\UX\TwigComponent\MountedComponent;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
@@ -45,8 +47,10 @@ final class LiveComponentHydrator
         $this->secret = $secret;
     }
 
-    public function dehydrate(object $component): array
+    public function dehydrate(MountedComponent $mounted): array
     {
+        $component = $mounted->getComponent();
+
         foreach (AsLiveComponent::preDehydrateMethods($component) as $method) {
             $component->{$method->name}();
         }
@@ -105,7 +109,7 @@ final class LiveComponentHydrator
         return $data;
     }
 
-    public function hydrate(object $component, array $data): void
+    public function hydrate(object $component, array $data, ComponentMetadata $metadata): MountedComponent
     {
         $readonlyProperties = [];
 
@@ -187,6 +191,8 @@ final class LiveComponentHydrator
         foreach (AsLiveComponent::postHydrateMethods($component) as $method) {
             $component->{$method->name}();
         }
+
+        return new MountedComponent($component, $metadata);
     }
 
     private function computeChecksum(array $data, array $readonlyProperties): string
