@@ -59,6 +59,10 @@ final class DoctrineEntityPropertyHydrator implements PropertyHydratorInterface
 
     public function hydrate(string $type, $value)
     {
+        if (!class_exists($type)) {
+            throw new UnsupportedHydrationException();
+        }
+
         return $this->objectManagerFor($type)->find($type, $value);
     }
 

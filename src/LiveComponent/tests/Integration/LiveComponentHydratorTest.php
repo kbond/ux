@@ -17,7 +17,6 @@ use Symfony\UX\LiveComponent\LiveComponentHydrator;
 use Symfony\UX\LiveComponent\Tests\Fixture\Component\Component1;
 use Symfony\UX\LiveComponent\Tests\Fixture\Component\Component2;
 use Symfony\UX\LiveComponent\Tests\Fixture\Component\Component3;
-use Symfony\UX\LiveComponent\Tests\Fixture\Component\ComponentWithAttributes;
 use Symfony\UX\LiveComponent\Tests\Fixture\Entity\Entity1;
 use Symfony\UX\TwigComponent\ComponentFactory;
 use Symfony\UX\TwigComponent\ComponentMetadata;
@@ -283,19 +282,16 @@ final class LiveComponentHydratorTest extends KernelTestCase
 
         $mounted = $factory->create('with_attributes', $attributes = ['class' => 'foo']);
 
-        /** @var ComponentWithAttributes $component */
-        $component = $mounted->getComponent();
-
-        $this->assertSame($attributes, $component->attributes->all());
+        $this->assertSame($attributes, $mounted->getExtraData()['attributes']->all());
 
         $dehydrated = $hydrator->dehydrate($mounted);
 
         $this->assertArrayHasKey('attributes', $dehydrated);
-        $this->assertSame($attributes, $dehydrated['attributes']);
+        $this->assertSame($attributes, $dehydrated['attributes']['_attributes']);
 
-        $hydrator->hydrate($component = $factory->get('with_attributes'), $dehydrated, $mounted->getMetadata());
+        $mounted = $hydrator->hydrate($factory->get('with_attributes'), $dehydrated, $mounted->getMetadata());
 
-        $this->assertSame($attributes, $component->attributes->all());
+        $this->assertSame($attributes, $mounted->getExtraData()['attributes']->all());
     }
 
     public function testCanDehydrateAndHydrateComponentsWithEmptyAttributes(): void
@@ -308,20 +304,15 @@ final class LiveComponentHydratorTest extends KernelTestCase
 
         $mounted = $factory->create('with_attributes');
 
-        /** @var ComponentWithAttributes $component */
-        $component = $mounted->getComponent();
-
-        $this->assertSame([], $component->attributes->all());
+        $this->assertSame([], $mounted->getExtraData()['attributes']->all());
 
         $dehydrated = $hydrator->dehydrate($mounted);
 
         $this->assertArrayHasKey('attributes', $dehydrated);
-        $this->assertSame([], $dehydrated['attributes']);
+        $this->assertSame([], $dehydrated['attributes']['_attributes']);
 
-        $component = $factory->get('with_attributes');
+        $mounted = $hydrator->hydrate($factory->get('with_attributes'), $dehydrated, $mounted->getMetadata());
 
-        $hydrator->hydrate($component, $dehydrated, $mounted->getMetadata());
-
-        $this->assertSame([], $component->attributes->all());
+        $this->assertSame([], $mounted->getExtraData()['attributes']->all());
     }
 }

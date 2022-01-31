@@ -23,6 +23,7 @@ use Symfony\UX\LiveComponent\ComponentValidator;
 use Symfony\UX\LiveComponent\ComponentValidatorInterface;
 use Symfony\UX\LiveComponent\EventListener\AddLiveAttributesSubscriber;
 use Symfony\UX\LiveComponent\EventListener\LiveComponentSubscriber;
+use Symfony\UX\LiveComponent\Hydrator\ComponentAttributesPropertyHydrator;
 use Symfony\UX\LiveComponent\LiveComponentHydrator;
 use Symfony\UX\LiveComponent\PropertyHydratorInterface;
 use Symfony\UX\LiveComponent\Twig\LiveComponentExtension as LiveComponentTwigExtension;
@@ -64,6 +65,10 @@ final class LiveComponentExtension extends Extension
                 new Reference('property_accessor'),
                 '%kernel.secret%',
             ])
+        ;
+
+        $container->register('ux.live_component.component_attributes_property_hydrator', ComponentAttributesPropertyHydrator::class)
+            ->addTag('twig.component.property_hydrator')
         ;
 
         $container->register('ux.live_component.event_subscriber', LiveComponentSubscriber::class)

@@ -38,4 +38,9 @@ final class MountedComponent
     {
         return array_merge(['this' => $this->component], get_object_vars($this->component), $this->extraData);
     }
+
+    public function getExtraData(): array
+    {
+        return $this->extraData;
+    }
 }

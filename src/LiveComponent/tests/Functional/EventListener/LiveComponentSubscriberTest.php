@@ -48,6 +48,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
 
         $dehydrated = $hydrator->dehydrate($component);
 
+        // the http_build_query removes the empty attributes array so it fails the checksum (as it doesn't exist)
         $this->browser()
             ->throwExceptions()
             ->get('/_components/component1?'.http_build_query($dehydrated))
