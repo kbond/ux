@@ -113,7 +113,7 @@ final class ComponentFactoryTest extends KernelTestCase
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('Unable to write "service" to component "Symfony\UX\TwigComponent\Tests\Fixture\Component\ComponentA". Make sure this is a writable property or create a mount() with a $service argument.');
 
-        $factory->create('component_a', ['propB' => 'B', 'service' => 'invalid']);
+        $factory->create('component_a', ['propB' => 'B', 'service' => new \stdClass()]);
     }
 
     public function testTwigComponentServiceTagMustHaveKey(): void

@@ -31,6 +31,7 @@ final class LiveComponentHydrator
 {
     private const CHECKSUM_KEY = '_checksum';
     private const EXPOSED_PROP_KEY = '_id';
+    private const EXTRA_DATA_KEY = '_extra';
 
     /** @var PropertyHydratorInterface[] */
     private iterable $propertyHydrators;
@@ -56,7 +57,7 @@ final class LiveComponentHydrator
         }
 
         $data = [];
-        $readonlyProperties = [];
+        $readonlyProperties = [self::EXTRA_DATA_KEY];
         $frontendPropertyNames = [];
 
         foreach (AsLiveComponent::liveProps($component) as $context) {
@@ -104,6 +105,12 @@ final class LiveComponentHydrator
             }
         }
 
+        foreach ($mounted->getExtraData() as $key => $value) {
+            $data[$key] = $this->dehydrateProperty($value, $key, $component);
+            $data[self::EXTRA_DATA_KEY][] = $key;
+            $readonlyProperties[] = $key;
+        }
+
         $data[self::CHECKSUM_KEY] = $this->computeChecksum($data, $readonlyProperties);
 
         return $data;
@@ -111,7 +118,7 @@ final class LiveComponentHydrator
 
     public function hydrate(object $component, array $data, ComponentMetadata $metadata): MountedComponent
     {
-        $readonlyProperties = [];
+        $readonlyProperties = array_merge([self::EXTRA_DATA_KEY], $data[self::EXTRA_DATA_KEY]);
 
         /** @var LivePropContext[] $propertyContexts */
         $propertyContexts = iterator_to_array(AsLiveComponent::liveProps($component));
@@ -192,7 +199,26 @@ final class LiveComponentHydrator
             $component->{$method->name}();
         }
 
-        return new MountedComponent($component, $metadata);
+        $extraData = [];
+
+        foreach ($data[self::EXTRA_DATA_KEY] as $key) {
+            foreach ($this->propertyHydrators as $hydrator) {
+                try {
+                    $value = $hydrator->hydrate(gettype($data[$key]), $data[$key]);
+                } catch (UnsupportedHydrationException $e) {
+                    continue;
+                }
+            }
+
+            if (!isset($value)) {
+                // todo improve
+                throw new \RuntimeException('Could not re-hydrate extra value');
+            }
+
+            $extraData[$key] = $value;
+        }
+
+        return new MountedComponent($component, $extraData, $metadata);
     }
 
     private function computeChecksum(array $data, array $readonlyProperties): string
