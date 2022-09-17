@@ -39,6 +39,10 @@ export default class extends Controller implements LiveController {
          * Default: 150
          */
         debounce: Number,
+        /**
+         * If true, "updatedModels" list is send on Ajax requests to help debugging.
+         */
+        includeUpdatedModels: Boolean,
     }
 
     readonly urlValue!: string;
@@ -46,29 +50,20 @@ export default class extends Controller implements LiveController {
     readonly csrfValue!: string;
     readonly debounceValue!: number;
     readonly hasDebounceValue: boolean;
+    readonly includeUpdatedModelsValue: boolean;
 
+    backendRequest: BackendRequest|null;
     valueStore!: ValueStore;
 
-    /**
-     * The current "timeout" that's waiting before a model update
-     * triggers a re-render.
-     */
-    renderDebounceTimeout: number | null = null;
+    /** Actions that are waiting to be executed */
+    pendingActions: Array<{ name: string, args: Record<string, string> }> = [];
+    /** Does at least one updated model requier a re-render? */
+    doModelsRequireReRender = false;
 
     /**
-     * The current "timeout" that's waiting before an action should
-     * be taken.
+     * Current "timeout" before the pending request should be sent.
      */
-    actionDebounceTimeout: number | null = null;
-
-    /**
-     * A stack of all current AJAX Promises for re-rendering.
-     *
-     * @type {PromiseStack}
-     */
-    renderPromiseStack = new PromiseStack();
-
-    isActionProcessing = false;
+    debounceTimeout: number | null = null;
 
     pollingIntervals: NodeJS.Timer[] = [];
 
@@ -79,7 +74,7 @@ export default class extends Controller implements LiveController {
     mutationObserver: MutationObserver|null = null;
 
     /**
-     * Input fields that have "changed", but whose model value hasn't been set yet.
+     * Model form fields that have "changed", but whose model value hasn't been set yet.
      */
     unsyncedInputs!: UnsyncedInputContainer;
 
@@ -124,6 +119,7 @@ export default class extends Controller implements LiveController {
 
     disconnect() {
         this._stopAllPolling();
+        this.#clearDebounceTimeout();
 
         window.removeEventListener('beforeunload', this.markAsWindowUnloaded);
         this.element.removeEventListener('live:update-model', this.handleUpdateModelEvent);
@@ -164,19 +160,10 @@ export default class extends Controller implements LiveController {
         const directives = parseDirectives(rawAction);
 
         directives.forEach((directive) => {
-            // set here so it can be delayed with debouncing below
-            const _executeAction = () => {
-                // if any normal renders are waiting to start, cancel them
-                // allow the action to start and finish
-                // this covers a case where you "blur" a field to click "save"
-                // the "change" event will trigger first & schedule a re-render
-                // then the action Ajax will start. We want to avoid the
-                // re-render request from starting after the debounce and
-                // taking precedence
-                this._clearWaitingDebouncedRenders();
-
-                this._makeRequest(directive.action, directive.named);
-            }
+            this.pendingActions.push({
+                name: directive.action,
+                args: directive.named
+            });
 
             let handled = false;
             directive.modifiers.forEach((modifier) => {
@@ -195,15 +182,10 @@ export default class extends Controller implements LiveController {
                     case 'debounce': {
                         const length: number = modifier.value ? parseInt(modifier.value) : this.getDefaultDebounce();
 
-                        // clear any pending renders
-                        if (this.actionDebounceTimeout) {
-                            clearTimeout(this.actionDebounceTimeout);
-                            this.actionDebounceTimeout = null;
-                        }
-
-                        this.actionDebounceTimeout = window.setTimeout(() => {
-                            this.actionDebounceTimeout = null;
-                            _executeAction();
+                        this.#clearDebounceTimeout();
+                        this.debounceTimeout = window.setTimeout(() => {
+                            this.debounceTimeout = null;
+                            this.#startPendingRequest();
                         }, length);
 
                         handled = true;
@@ -223,21 +205,23 @@ export default class extends Controller implements LiveController {
                 // model change *before* sending the action
                 if (getModelDirectiveFromInput(event.currentTarget, false)) {
                     this.pendingActionTriggerModelElement = event.currentTarget;
+                    this.#clearDebounceTimeout();
                     window.setTimeout(() => {
                         this.pendingActionTriggerModelElement = null;
-                        _executeAction();
+                        this.#startPendingRequest();
                     }, 10);
 
                     return;
                 }
 
-                _executeAction();
+                this.#startPendingRequest();
             }
         })
     }
 
     $render() {
-        this._makeRequest(null, {});
+        this.doModelsRequireReRender = true;
+        this.#startPendingRequest();
     }
 
     /**
@@ -258,8 +242,6 @@ export default class extends Controller implements LiveController {
         const modelDirective = getModelDirectiveFromInput(element, false);
         if (eventName === 'input') {
             const modelName = modelDirective ? modelDirective.action : null;
-            // notify existing promises of the new modified input
-            this.renderPromiseStack.addModifiedElement(element, modelName);
             // track any inputs that are "unsynced"
             this.unsyncedInputs.add(element, modelName);
         }
@@ -353,7 +335,7 @@ export default class extends Controller implements LiveController {
      * @param {string|null} extraModelName Another model name that this might go by in a parent component.
      * @param {UpdateModelOptions} options
      */
-    $updateModel(model: string, value: any, shouldRender = true, extraModelName: string | null = null, options: UpdateModelOptions = {}) {
+    $updateModel(model: string, value: any, shouldRender = true, extraModelName: string|null = null, options: UpdateModelOptions = {}) {
         const modelName = normalizeModelName(model);
         const normalizedExtraModelName = extraModelName ? normalizeModelName(extraModelName) : null;
 
@@ -391,90 +373,98 @@ export default class extends Controller implements LiveController {
         // the string "4" - back into an array with [id=4, title=new_title].
         this.valueStore.set(modelName, value);
 
-        // now that this value is set, remove it from unsyncedInputs
-        // any Ajax request that starts from this moment WILL include this
-        this.unsyncedInputs.remove(modelName);
-
         // skip rendering if there is an action Ajax call processing
-        if (shouldRender && !this.isActionProcessing) {
-            // clear any pending renders
-            this._clearWaitingDebouncedRenders();
-
+        if (shouldRender) {
             let debounce: number = this.getDefaultDebounce();
             if (options.debounce !== undefined && options.debounce !== null) {
                 debounce = options.debounce;
             }
 
-            this.renderDebounceTimeout = window.setTimeout(() => {
-                this.renderDebounceTimeout = null;
-                this.$render();
+            this.debounceTimeout = window.setTimeout(() => {
+                this.debounceTimeout = null;
+                this.doModelsRequireReRender = true;
+                this.#startPendingRequest();
             }, debounce);
         }
     }
 
-    _makeRequest(action: string|null, args: Record<string, string>) {
+    /**
+     * Makes a request to the server with all pending actions/updates, if any.
+     */
+    #startPendingRequest(): void {
+        if (!this.backendRequest && this.pendingActions.length > 0 || this.doModelsRequireReRender) {
+            this.#makeRequest();
+        }
+    }
+
+    #makeRequest() {
         const splitUrl = this.urlValue.split('?');
         let [url] = splitUrl
         const [, queryString] = splitUrl;
         const params = new URLSearchParams(queryString || '');
 
-        if (typeof args === 'object' && Object.keys(args).length > 0) {
-            params.set('args', new URLSearchParams(args).toString());
-        }
+        const actions = this.pendingActions;
+        this.pendingActions = [];
+        this.doModelsRequireReRender = false;
 
         const fetchOptions: RequestInit = {};
         fetchOptions.headers = {
             'Accept': 'application/vnd.live-component+html',
         };
 
-        if (action) {
-            this.isActionProcessing = true;
-
-            url += `/${encodeURIComponent(action)}`;
-
-            if (this.csrfValue) {
-                fetchOptions.headers['X-CSRF-TOKEN'] = this.csrfValue;
+        const updatedModels = this.includeUpdatedModelsValue ? this.valueStore.updatedModels : false;
+        this.valueStore.updatedModels = [];
+        if (actions.length === 0 && this._willDataFitInUrl(this.valueStore.asJson(), params)) {
+            params.set('data', this.valueStore.asJson());
+            if (updatedModels) {
+                updatedModels.forEach((model) => {
+                    params.append('updatedModels[]', model);
+                });
             }
-        }
-
-        let dataAdded = false;
-        if (!action) {
-            const dataJson = this.valueStore.asJson();
-            if (this._willDataFitInUrl(dataJson, params)) {
-                params.set('data', dataJson);
-                fetchOptions.method = 'GET';
-                dataAdded = true;
-            }
-        }
-
-        // if GET can't be used, fallback to POST
-        if (!dataAdded) {
+            fetchOptions.method = 'GET';
+        } else {
             fetchOptions.method = 'POST';
-            fetchOptions.body = this.valueStore.asJson();
             fetchOptions.headers['Content-Type'] = 'application/json';
+            // TODO: I just moved under data
+            const requestData: any = { data: this.valueStore.all() };
+            if (updatedModels) {
+                requestData.updatedModels = updatedModels;
+            }
+
+            if (actions.length > 0) {
+                // one or more ACTIONs
+                if (this.csrfValue) {
+                    fetchOptions.headers['X-CSRF-TOKEN'] = this.csrfValue;
+                }
+
+                if (actions.length === 1) {
+                    // simple, single action
+                    // TODO : I just moved this data, it was query params
+                    requestData.action = actions[0].name;
+                    requestData.args = actions[0].args;
+
+                    url += `/${encodeURIComponent(actions[0].name)}`;
+                } else {
+                    // TODO: support on the server
+                    url += '/batch';
+                    requestData.actions = actions;
+                }
+            }
+
+            fetchOptions.body = JSON.stringify(requestData);
         }
 
         this._onLoadingStart();
         const paramsString = params.toString();
         const thisPromise = fetch(`${url}${paramsString.length > 0 ? `?${paramsString}` : ''}`, fetchOptions);
-        const reRenderPromise = new ReRenderPromise(thisPromise, this.unsyncedInputs.clone());
-        this.renderPromiseStack.addPromise(reRenderPromise);
+        this.backendRequest = new BackendRequest(thisPromise);
         thisPromise.then((response) => {
-            if (action) {
-                this.isActionProcessing = false;
-            }
+            response.text().then((html) => {
+                this.#processRerender(html, response);
 
-            // if another re-render is scheduled, do not "run it over"
-            if (this.renderDebounceTimeout) {
-                return;
-            }
-
-            const isMostRecent = this.renderPromiseStack.removePromise(thisPromise);
-            if (isMostRecent) {
-                response.text().then((html) => {
-                    this._processRerender(html, response, reRenderPromise.unsyncedInputContainer);
-                });
-            }
+                this.backendRequest = null;
+                this.#startPendingRequest();
+            });
         })
     }
 
@@ -483,7 +473,7 @@ export default class extends Controller implements LiveController {
      *
      * @private
      */
-    _processRerender(html: string, response: Response, unsyncedInputContainer: UnsyncedInputContainer) {
+    #processRerender(html: string, response: Response) {
         // check if the page is navigating away
         if (this.isWindowUnloaded) {
             return;
@@ -500,15 +490,15 @@ export default class extends Controller implements LiveController {
             return;
         }
 
-        if (!this._dispatchEvent('live:render', html, true, true)) {
-            // preventDefault() was called
-            return;
-        }
-
         // remove the loading behavior now so that when we morphdom
         // "diffs" the elements, any loading differences will not cause
         // elements to appear different unnecessarily
         this._onLoadingFinish();
+
+        if (!this._dispatchEvent('live:render', html, true, true)) {
+            // preventDefault() was called
+            return;
+        }
 
         /**
          * If this re-render contains "mapped" fields that were updated after
@@ -516,26 +506,26 @@ export default class extends Controller implements LiveController {
          * take precedence over the (out-of-date) values returned by the server.
          */
         const modifiedModelValues: any = {};
-        if (unsyncedInputContainer.allMappedFields().size > 0) {
-            for (const [modelName] of unsyncedInputContainer.allMappedFields()) {
+        if (this.unsyncedInputs.allMappedFields().size > 0) {
+            for (const [modelName] of this.unsyncedInputs.allMappedFields()) {
                 modifiedModelValues[modelName] = this.valueStore.get(modelName);
             }
         }
 
         // merge/patch in the new HTML
-        this._executeMorphdom(html, unsyncedInputContainer.all());
+        this._executeMorphdom(html, this.unsyncedInputs.all());
 
         // reset the modified values back to their client-side version
         Object.keys(modifiedModelValues).forEach((modelName) => {
             this.valueStore.set(modelName, modifiedModelValues[modelName]);
         });
-    }
 
-    _clearWaitingDebouncedRenders() {
-        if (this.renderDebounceTimeout) {
-            clearTimeout(this.renderDebounceTimeout);
-            this.renderDebounceTimeout = null;
-        }
+        // check if any unsynced inputs are now "in sync": their value matches what's in the store
+        this.unsyncedInputs.allMappedFields().forEach((element, modelName) => {
+            if (getValueFromInput(element, this.valueStore) === this.valueStore.get(modelName)) {
+                this.unsyncedInputs.remove(modelName);
+            }
+        });
     }
 
     _onLoadingStart() {
@@ -856,15 +846,13 @@ export default class extends Controller implements LiveController {
             }
         } else {
             callback = () => {
-                this._makeRequest(actionName, {});
+                this.pendingActions.push({ name: actionName, args: {}})
+                this.#startPendingRequest();
             }
         }
 
         const timer = setInterval(() => {
-            // if there is already an active render promise, skip the poll
-            if (this.renderPromiseStack.countActivePromises() > 0) {
-                return;
-            }
+            // TODO "schedule" the poll
 
             callback();
         }, duration);
@@ -1038,65 +1026,21 @@ export default class extends Controller implements LiveController {
             clearInterval(interval);
         });
     }
-}
 
-/**
- * Tracks the current "re-render" promises.
- */
-class PromiseStack {
-    stack: Array<ReRenderPromise> = [];
-
-    addPromise(reRenderPromise: ReRenderPromise) {
-        this.stack.push(reRenderPromise);
-    }
-
-    /**
-     * Removes the promise AND returns `true` if it is the most recent.
-     */
-    removePromise(promise: Promise<any>): boolean {
-        const index = this.#findPromiseIndex(promise);
-
-        // promise was not found - it was removed because a new Promise
-        // already resolved before it
-        if (index === -1) {
-            return false;
+    #clearDebounceTimeout() {
+        // clear any pending renders
+        if (this.debounceTimeout) {
+            clearTimeout(this.debounceTimeout);
+            this.debounceTimeout = null;
         }
-
-        // "save" whether this is the most recent or not
-        const isMostRecent = this.stack.length === (index + 1);
-
-        // remove all promises starting from the oldest up through this one
-        this.stack.splice(0, index + 1);
-
-        return isMostRecent;
-    }
-
-    #findPromiseIndex(promise: Promise<any>) {
-        return this.stack.findIndex((item) => item.promise === promise);
-    }
-
-    countActivePromises(): number {
-        return this.stack.length;
-    }
-
-    addModifiedElement(element: HTMLElement, modelName: string|null = null): void {
-        this.stack.forEach((reRenderPromise) => {
-            reRenderPromise.addModifiedElement(element, modelName);
-        });
     }
 }
 
-class ReRenderPromise {
+class BackendRequest {
     promise: Promise<any>;
-    unsyncedInputContainer: UnsyncedInputContainer;
 
-    constructor(promise: Promise<any>, unsyncedInputContainer: UnsyncedInputContainer) {
+    constructor(promise: Promise<any>) {
         this.promise = promise;
-        this.unsyncedInputContainer = unsyncedInputContainer;
-    }
-
-    addModifiedElement(element: HTMLElement, modelName: string|null = null): void {
-        this.unsyncedInputContainer.add(element, modelName);
     }
 }
 

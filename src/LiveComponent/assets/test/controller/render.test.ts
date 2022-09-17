@@ -240,4 +240,7 @@ describe('LiveController rendering Tests', () => {
         // the re-render should not have happened
         expect(test.element).not.toHaveTextContent('Hello');
     });
+
+    // TODO: tests
+    // multiple, pending re-render requests, including for "deferred" updates
 });

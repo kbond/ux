@@ -32,7 +32,8 @@ export function shutdownTest() {
     unmatchedFetchErrors.forEach((unmatchedFetchError) => {
         const urlParams = new URLSearchParams(unmatchedFetchError.url.substring(unmatchedFetchError.url.indexOf('?')));
         const requestInfo = [];
-        requestInfo.push(` METHOD: ${unmatchedFetchError.method}`);
+        requestInfo.push(` URL: ${unmatchedFetchError.url}`)
+        requestInfo.push(`  METHOD: ${unmatchedFetchError.method}`);
         requestInfo.push(`  HEADERS: ${JSON.stringify(unmatchedFetchError.headers)}`);
         requestInfo.push(`  DATA: ${unmatchedFetchError.method === 'GET' ? urlParams.get('data') : unmatchedFetchError.body}`);
 
@@ -203,7 +204,12 @@ class MockedAjaxCall {
 
     getVisualSummary(): string {
         const requestInfo = [];
-        requestInfo.push(` METHOD: ${this.method}`);
+        if (this.method === 'GET') {
+            requestInfo.push(` URL MATCH: ${this.getMockMatcher().url}`);
+        } else {
+            requestInfo.push(` URL MATCH: /${this.expectedActionName}`);
+        }
+        requestInfo.push(`  METHOD: ${this.method}`);
         if (Object.keys(this.expectedHeaders).length > 0) {
             requestInfo.push(`  HEADERS: ${JSON.stringify(this.expectedHeaders)}`);
         }
