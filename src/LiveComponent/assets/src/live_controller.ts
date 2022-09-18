@@ -57,8 +57,8 @@ export default class extends Controller implements LiveController {
 
     /** Actions that are waiting to be executed */
     pendingActions: Array<{ name: string, args: Record<string, string> }> = [];
-    /** Does at least one updated model requier a re-render? */
-    doModelsRequireReRender = false;
+    /** Has anything requested a re-render? */
+    isRerenderRequested = false;
 
     /**
      * Current "timeout" before the pending request should be sent.
@@ -220,7 +220,7 @@ export default class extends Controller implements LiveController {
     }
 
     $render() {
-        this.doModelsRequireReRender = true;
+        this.isRerenderRequested = true;
         this.#startPendingRequest();
     }
 
@@ -383,7 +383,7 @@ export default class extends Controller implements LiveController {
             this.#clearRequestDebounceTimeout();
             this.requestDebounceTimeout = window.setTimeout(() => {
                 this.requestDebounceTimeout = null;
-                this.doModelsRequireReRender = true;
+                this.isRerenderRequested = true;
                 this.#startPendingRequest();
             }, debounce);
         }
@@ -393,7 +393,7 @@ export default class extends Controller implements LiveController {
      * Makes a request to the server with all pending actions/updates, if any.
      */
     #startPendingRequest(): void {
-        if (!this.backendRequest && (this.pendingActions.length > 0 || this.doModelsRequireReRender)) {
+        if (!this.backendRequest && (this.pendingActions.length > 0 || this.isRerenderRequested)) {
             this.#makeRequest();
         }
     }
@@ -406,7 +406,7 @@ export default class extends Controller implements LiveController {
 
         const actions = this.pendingActions;
         this.pendingActions = [];
-        this.doModelsRequireReRender = false;
+        this.isRerenderRequested = false;
         // we're making a request NOW, so no need to make another one after debouncing
         this.#clearRequestDebounceTimeout();
 
@@ -854,8 +854,6 @@ export default class extends Controller implements LiveController {
         }
 
         const timer = setInterval(() => {
-            // TODO "schedule" the poll
-
             callback();
         }, duration);
         this.pollingIntervals.push(timer);
