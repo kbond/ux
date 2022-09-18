@@ -63,7 +63,7 @@ export default class extends Controller implements LiveController {
     /**
      * Current "timeout" before the pending request should be sent.
      */
-    debounceTimeout: number | null = null;
+    requestDebounceTimeout: number | null = null;
 
     pollingIntervals: NodeJS.Timer[] = [];
 
@@ -119,7 +119,7 @@ export default class extends Controller implements LiveController {
 
     disconnect() {
         this._stopAllPolling();
-        this.#clearDebounceTimeout();
+        this.#clearRequestDebounceTimeout();
 
         window.removeEventListener('beforeunload', this.markAsWindowUnloaded);
         this.element.removeEventListener('live:update-model', this.handleUpdateModelEvent);
@@ -182,9 +182,9 @@ export default class extends Controller implements LiveController {
                     case 'debounce': {
                         const length: number = modifier.value ? parseInt(modifier.value) : this.getDefaultDebounce();
 
-                        this.#clearDebounceTimeout();
-                        this.debounceTimeout = window.setTimeout(() => {
-                            this.debounceTimeout = null;
+                        this.#clearRequestDebounceTimeout();
+                        this.requestDebounceTimeout = window.setTimeout(() => {
+                            this.requestDebounceTimeout = null;
                             this.#startPendingRequest();
                         }, length);
 
@@ -205,7 +205,7 @@ export default class extends Controller implements LiveController {
                 // model change *before* sending the action
                 if (getModelDirectiveFromInput(event.currentTarget, false)) {
                     this.pendingActionTriggerModelElement = event.currentTarget;
-                    this.#clearDebounceTimeout();
+                    this.#clearRequestDebounceTimeout();
                     window.setTimeout(() => {
                         this.pendingActionTriggerModelElement = null;
                         this.#startPendingRequest();
@@ -380,9 +380,9 @@ export default class extends Controller implements LiveController {
                 debounce = options.debounce;
             }
 
-            this.#clearDebounceTimeout();
-            this.debounceTimeout = window.setTimeout(() => {
-                this.debounceTimeout = null;
+            this.#clearRequestDebounceTimeout();
+            this.requestDebounceTimeout = window.setTimeout(() => {
+                this.requestDebounceTimeout = null;
                 this.doModelsRequireReRender = true;
                 this.#startPendingRequest();
             }, debounce);
@@ -407,6 +407,8 @@ export default class extends Controller implements LiveController {
         const actions = this.pendingActions;
         this.pendingActions = [];
         this.doModelsRequireReRender = false;
+        // we're making a request NOW, so no need to make another one after debouncing
+        this.#clearRequestDebounceTimeout();
 
         const fetchOptions: RequestInit = {};
         fetchOptions.headers = {
@@ -1027,11 +1029,11 @@ export default class extends Controller implements LiveController {
         });
     }
 
-    #clearDebounceTimeout() {
+    #clearRequestDebounceTimeout() {
         // clear any pending renders
-        if (this.debounceTimeout) {
-            clearTimeout(this.debounceTimeout);
-            this.debounceTimeout = null;
+        if (this.requestDebounceTimeout) {
+            clearTimeout(this.requestDebounceTimeout);
+            this.requestDebounceTimeout = null;
         }
     }
 }
