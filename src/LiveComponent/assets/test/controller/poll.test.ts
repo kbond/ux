@@ -222,6 +222,4 @@ describe('LiveController polling Tests', () => {
         await waitFor(() => expect(test.element).toHaveTextContent('Render count: 1'));
         await waitFor(() => expect(test.element).toHaveTextContent('Render count: 2'));
     });
-
-    // TODO: test "batching" of requests between polling and any other re-render request
 });
