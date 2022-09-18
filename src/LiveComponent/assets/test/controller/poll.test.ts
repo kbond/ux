@@ -185,4 +185,6 @@ describe('LiveController polling Tests', () => {
             timeout: 1500
         });
    });
+
+    // TODO: test "batching" of requests between polling and any other re-render request
 });

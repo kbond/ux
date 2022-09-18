@@ -280,5 +280,34 @@ describe('LiveController rendering Tests', () => {
         await waitFor(() => expect(test.element).toHaveTextContent('Title: "greetings!!!"'));
     });
 
-    // multiple, pending re-render requests, including for "deferred" updates
+    it('batches re-render requests together that occurred during debounce', async () => {
+        const test = await createTest({ title: 'greetings', contents: '' }, (data: any) => `
+            <div ${initComponent(data, { debounce: 50 })}>
+                <input data-model="title" value="${data.title}">
+                <textarea data-model="contents">${data.contents}</textarea>
+
+                Title: "${data.title}"
+
+                <button data-action="live#$render">Reload</button>
+            </div>
+        `);
+
+        // type: 50ms debounce will begin
+        userEvent.type(test.queryByDataModel('title'), ' to you');
+        setTimeout(() => {
+            // wait 40 ms: not long enough for debounce, then modify this field
+            userEvent.type(test.queryByDataModel('contents'), 'Welcome to our test!');
+
+            // the ONE request will not start until 50ms (debounce) from now
+            // delay 40 ms before we start to expect it
+            setTimeout(() => {
+                // just one request should be made
+                test.expectsAjaxCall('get')
+                    .expectSentData({ title: 'greetings to you', contents: 'Welcome to our test!'})
+                    .init();
+                }, 40)
+        }, 40);
+
+        await waitFor(() => expect(test.element).toHaveTextContent('Title: "greetings to you"'));
+    });
 });

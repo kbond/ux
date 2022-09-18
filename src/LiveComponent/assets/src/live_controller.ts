@@ -380,6 +380,7 @@ export default class extends Controller implements LiveController {
                 debounce = options.debounce;
             }
 
+            this.#clearDebounceTimeout();
             this.debounceTimeout = window.setTimeout(() => {
                 this.debounceTimeout = null;
                 this.doModelsRequireReRender = true;
