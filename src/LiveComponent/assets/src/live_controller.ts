@@ -410,6 +410,15 @@ export default class extends Controller implements LiveController {
         // we're making a request NOW, so no need to make another one after debouncing
         this.#clearRequestDebounceTimeout();
 
+        // check if any unsynced inputs are now "in sync": their value matches what's in the store
+        // if they ARE, then they are on longer "unsynced", which means that any
+        // potential new values from the server *should* now be respected and used
+        this.unsyncedInputs.allMappedFields().forEach((element, modelName) => {
+            if (getValueFromInput(element, this.valueStore) === this.valueStore.get(modelName)) {
+                this.unsyncedInputs.remove(modelName);
+            }
+        });
+
         const fetchOptions: RequestInit = {};
         fetchOptions.headers = {
             'Accept': 'application/vnd.live-component+html',
@@ -520,13 +529,6 @@ export default class extends Controller implements LiveController {
         // reset the modified values back to their client-side version
         Object.keys(modifiedModelValues).forEach((modelName) => {
             this.valueStore.set(modelName, modifiedModelValues[modelName]);
-        });
-
-        // check if any unsynced inputs are now "in sync": their value matches what's in the store
-        this.unsyncedInputs.allMappedFields().forEach((element, modelName) => {
-            if (getValueFromInput(element, this.valueStore) === this.valueStore.get(modelName)) {
-                this.unsyncedInputs.remove(modelName);
-            }
         });
     }
 
