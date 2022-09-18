@@ -393,7 +393,7 @@ export default class extends Controller implements LiveController {
      * Makes a request to the server with all pending actions/updates, if any.
      */
     #startPendingRequest(): void {
-        if (!this.backendRequest && this.pendingActions.length > 0 || this.doModelsRequireReRender) {
+        if (!this.backendRequest && (this.pendingActions.length > 0 || this.doModelsRequireReRender)) {
             this.#makeRequest();
         }
     }
