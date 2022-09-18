@@ -218,9 +218,6 @@ class MockedAjaxCall {
         }
         if (this.expectedActionName) {
             requestInfo.push(`  Expected URL to contain action /${this.expectedActionName}`)
-            if (this.expectedActionArgs) {
-                requestInfo.push(`  Expected action arguments in URL matching ${this.calculateArgsQueryString()}`)
-            }
         }
 
         return requestInfo.join("\n");
@@ -262,18 +259,10 @@ class MockedAjaxCall {
             data: this.expectedSentData
         };
         if (this.expectedActionName) {
-            body.action = 'saveAction';
             body.args = this.expectedActionArgs;
         }
 
         return body;
-    }
-
-    private calculateArgsQueryString(): string {
-        const urlParams = new URLSearchParams();
-        urlParams.set('args', new URLSearchParams(this.expectedActionArgs).toString());
-
-        return urlParams.toString();
     }
 
     private checkInitialization = (method: string): void => {

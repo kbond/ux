@@ -441,7 +441,6 @@ export default class extends Controller implements LiveController {
                 if (actions.length === 1) {
                     // simple, single action
                     // TODO : I just moved this data, it was query params
-                    requestData.action = actions[0].name;
                     requestData.args = actions[0].args;
 
                     url += `/${encodeURIComponent(actions[0].name)}`;
