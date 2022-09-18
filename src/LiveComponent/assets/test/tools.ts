@@ -114,7 +114,7 @@ class MockedAjaxCall {
     test: FunctionalTest;
     expectedSentData?: any;
     expectedActionName?: string;
-    expectedActionArgs: any = null;
+    expectedActionArgs: any = {};
     expectedHeaders: any = {};
     changeDataCallback?: (data: any) => void;
     template?: (data: any) => string
@@ -155,7 +155,7 @@ class MockedAjaxCall {
         return this;
     }
 
-    expectActionCalled(actionName: string, args: any = null): MockedAjaxCall {
+    expectActionCalled(actionName: string, args: any = {}): MockedAjaxCall {
         this.checkInitialization('expectActionName');
         this.expectedActionName = actionName;
         this.expectedActionArgs = args;
@@ -206,14 +206,16 @@ class MockedAjaxCall {
         const requestInfo = [];
         if (this.method === 'GET') {
             requestInfo.push(` URL MATCH: ${this.getMockMatcher().url}`);
-        } else {
-            requestInfo.push(` URL MATCH: /${this.expectedActionName}`);
         }
         requestInfo.push(`  METHOD: ${this.method}`);
         if (Object.keys(this.expectedHeaders).length > 0) {
             requestInfo.push(`  HEADERS: ${JSON.stringify(this.expectedHeaders)}`);
         }
-        requestInfo.push(`  DATA: ${JSON.stringify(this.expectedSentData)}`);
+        if (this.method === 'GET') {
+            requestInfo.push(`  DATA: ${JSON.stringify(this.expectedSentData)}`);
+        } else {
+            requestInfo.push(`  DATA: ${JSON.stringify(this.getRequestBody())}`);
+        }
         if (this.expectedActionName) {
             requestInfo.push(`  Expected URL to contain action /${this.expectedActionName}`)
             if (this.expectedActionArgs) {
@@ -242,30 +244,29 @@ class MockedAjaxCall {
             });
             matcherObject.url = `end:?${params.toString()}`;
         } else {
-            matcherObject.body = this.expectedSentData;
-            if (this.expectedActionName) {
-                matcherObject.functionMatcher = (url: string) => {
-                    // match the "/actionName" part in the URL
-                    if (!url.match(new RegExp(`/${this.expectedActionName}?`))) {
-                        return false;
-                    }
-
-                    // look for action arguments
-                    if (this.expectedActionArgs) {
-                        if (!url.includes(this.calculateArgsQueryString())) {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                }
-            }
+            matcherObject.body = this.getRequestBody();
         }
 
         this.routeName = `route-${this.test.mockedAjaxCalls.length}`;
         matcherObject.name = this.routeName;
 
         return matcherObject;
+    }
+
+    private getRequestBody(): any {
+        if (this.method === 'GET') {
+            return null;
+        }
+
+        const body: any = {
+            data: this.expectedSentData
+        };
+        if (this.expectedActionName) {
+            body.action = 'saveAction';
+            body.args = this.expectedActionArgs;
+        }
+
+        return body;
     }
 
     private calculateArgsQueryString(): string {
