@@ -113,8 +113,7 @@ class MockedAjaxCall {
     method: string;
     test: FunctionalTest;
     expectedSentData?: any;
-    expectedActionName?: string;
-    expectedActionArgs: any = {};
+    expectedActions: Array<{ name: string, args: any }> = [];
     expectedHeaders: any = {};
     changeDataCallback?: (data: any) => void;
     template?: (data: any) => string
@@ -157,8 +156,10 @@ class MockedAjaxCall {
 
     expectActionCalled(actionName: string, args: any = {}): MockedAjaxCall {
         this.checkInitialization('expectActionName');
-        this.expectedActionName = actionName;
-        this.expectedActionArgs = args;
+        this.expectedActions.push({
+            name: actionName,
+            args: args
+        })
 
         return this;
     }
@@ -216,8 +217,8 @@ class MockedAjaxCall {
         } else {
             requestInfo.push(`  DATA: ${JSON.stringify(this.getRequestBody())}`);
         }
-        if (this.expectedActionName) {
-            requestInfo.push(`  Expected URL to contain action /${this.expectedActionName}`)
+        if (this.expectedActions.length === 1) {
+            requestInfo.push(`  Expected URL to contain action /${this.expectedActions[0]}`)
         }
 
         return requestInfo.join("\n");
@@ -242,6 +243,11 @@ class MockedAjaxCall {
             matcherObject.url = `end:?${params.toString()}`;
         } else {
             matcherObject.body = this.getRequestBody();
+            if (this.expectedActions.length === 1) {
+                matcherObject.url = `end:/${this.expectedActions[0].name}`;
+            } else if (this.expectedActions.length > 1) {
+                matcherObject.url = `end:/_batch`;
+            }
         }
 
         this.routeName = `route-${this.test.mockedAjaxCalls.length}`;
@@ -258,8 +264,11 @@ class MockedAjaxCall {
         const body: any = {
             data: this.expectedSentData
         };
-        if (this.expectedActionName) {
-            body.args = this.expectedActionArgs;
+
+        if (this.expectedActions.length === 1) {
+            body.args = this.expectedActions[0].args;
+        } else if (this.expectedActions.length > 1) {
+            body.actions = this.expectedActions;
         }
 
         return body;

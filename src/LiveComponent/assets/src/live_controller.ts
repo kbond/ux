@@ -457,7 +457,7 @@ export default class extends Controller implements LiveController {
                     url += `/${encodeURIComponent(actions[0].name)}`;
                 } else {
                     // TODO: support on the server
-                    url += '/batch';
+                    url += '/_batch';
                     requestData.actions = actions;
                 }
             }

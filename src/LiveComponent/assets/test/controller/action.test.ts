@@ -175,4 +175,32 @@ describe('LiveController Action Tests', () => {
         // but soon the re-render does happen
         await waitFor(() => expect(test.element).toHaveTextContent('donut holes'));
     });
+
+    it('batches multiple actions together', async () => {
+        const test = await createTest({ isSaved: false }, (data: any) => `
+            <div ${initComponent(data)}>
+                ${data.isSaved ? 'Component Saved!' : ''}
+                <button data-action="live#action" data-action-name="debounce(10)|save">Save</button>
+                <button data-action="live#action" data-action-name="debounce(10)|sync(syncAll=1)">Sync</button>
+            </div>
+        `);
+
+        // 1 request with all 3 actions
+        test.expectsAjaxCall('post')
+            .expectSentData(test.initialData)
+            // 3 actions called
+            .expectActionCalled('save')
+            .expectActionCalled('sync', { syncAll: '1' })
+            .expectActionCalled('save')
+            .serverWillChangeData((data: any) => {
+                data.isSaved = true;
+            })
+            .init();
+
+        getByText(test.element, 'Save').click();
+        getByText(test.element, 'Sync').click();
+        getByText(test.element, 'Save').click();
+
+        await waitFor(() => expect(test.element).toHaveTextContent('Component Saved!'));
+    });
 });
