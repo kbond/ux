@@ -39,10 +39,6 @@ export default class extends Controller implements LiveController {
          * Default: 150
          */
         debounce: Number,
-        /**
-         * If true, "updatedModels" list is send on Ajax requests to help debugging.
-         */
-        includeUpdatedModels: Boolean,
     }
 
     readonly urlValue!: string;
@@ -50,7 +46,6 @@ export default class extends Controller implements LiveController {
     readonly csrfValue!: string;
     readonly debounceValue!: number;
     readonly hasDebounceValue: boolean;
-    readonly includeUpdatedModelsValue: boolean;
 
     backendRequest: BackendRequest|null;
     valueStore!: ValueStore;
@@ -424,24 +419,19 @@ export default class extends Controller implements LiveController {
             'Accept': 'application/vnd.live-component+html',
         };
 
-        const updatedModels = this.includeUpdatedModelsValue ? this.valueStore.updatedModels : false;
+        const updatedModels = this.valueStore.updatedModels;
         this.valueStore.updatedModels = [];
         if (actions.length === 0 && this._willDataFitInUrl(this.valueStore.asJson(), params)) {
             params.set('data', this.valueStore.asJson());
-            if (updatedModels) {
-                updatedModels.forEach((model) => {
-                    params.append('updatedModels[]', model);
-                });
-            }
+            updatedModels.forEach((model) => {
+                params.append('updatedModels[]', model);
+            });
             fetchOptions.method = 'GET';
         } else {
             fetchOptions.method = 'POST';
             fetchOptions.headers['Content-Type'] = 'application/json';
-            // TODO: I just moved under data
             const requestData: any = { data: this.valueStore.all() };
-            if (updatedModels) {
-                requestData.updatedModels = updatedModels;
-            }
+            requestData.updatedModels = updatedModels;
 
             if (actions.length > 0) {
                 // one or more ACTIONs
@@ -451,7 +441,6 @@ export default class extends Controller implements LiveController {
 
                 if (actions.length === 1) {
                     // simple, single action
-                    // TODO : I just moved this data, it was query params
                     requestData.args = actions[0].args;
 
                     url += `/${encodeURIComponent(actions[0].name)}`;
