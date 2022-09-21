@@ -69,6 +69,11 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             return;
         }
 
+        if ($request->attributes->has('_controller')) {
+            // sub request
+            return;
+        }
+
         // the default "action" is get, which does nothing
         $action = $request->get('action', 'get');
         $componentName = (string) $request->get('component');
@@ -107,6 +112,16 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             throw new BadRequestHttpException('Invalid CSRF token.');
         }
 
+        if ('_batch' === $action) {
+            // use batch controller
+            $request->attributes->set('_controller', 'ux.live_component.batch_action_controller');
+            $request->attributes->set('_component_service_id', $metadata->getServiceId());
+
+            $this->mountComponent($this->container->get(ComponentFactory::class)->get($componentName), $request);
+
+            return;
+        }
+
         $request->attributes->set('_controller', sprintf('%s::%s', $metadata->getServiceId(), $action));
     }
 
@@ -118,15 +133,8 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             return;
         }
 
-        $actionArguments = [];
-        if ($request->query->has('data')) {
-            // ?data=
-            $data = json_decode($request->query->get('data'), true, 512, \JSON_THROW_ON_ERROR);
-        } else {
-            // OR body of the request is JSON
-            $requestData = json_decode($request->getContent(), true, 512, \JSON_THROW_ON_ERROR);
-            $data = $requestData['data'] ?? [];
-            $actionArguments = $requestData['args'] ?? [];
+        if ($request->attributes->has('_component_service_id')) {
+            return;
         }
 
         if (!\is_array($controller = $event->getController()) || 2 !== \count($controller)) {
@@ -143,13 +151,14 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             throw new NotFoundHttpException(sprintf('The action "%s" either doesn\'t exist or is not allowed in "%s". Make sure it exist and has the LiveAction attribute above it.', $action, \get_class($component)));
         }
 
-        $mounted = $this->container->get(LiveComponentHydrator::class)->hydrate(
-            $component,
-            $data,
-            $request->attributes->get('_component_name')
-        );
+        if ($request->attributes->has('_mounted_component')) {
+            // sub-request
+            $event->setController([$request->attributes->get('_mounted_component')->getComponent(), $action]);
+        } else {
+            $this->mountComponent($component, $request);
+        }
 
-        $request->attributes->set('_mounted_component', $mounted);
+        $actionArguments = $request->attributes->get('_component_action_args', []);
 
         // extra variables to be made available to the controller
         // (for "actions" only)
@@ -160,9 +169,36 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
         }
     }
 
+    private function mountComponent(object $component, Request $request): void
+    {
+        if ($request->query->has('data')) {
+            // ?data=
+            $data = json_decode($request->query->get('data'), true, 512, \JSON_THROW_ON_ERROR);
+        } else {
+            // OR body of the request is JSON
+            $requestData = json_decode($request->getContent(), true, 512, \JSON_THROW_ON_ERROR);
+            $data = $requestData['data'] ?? [];
+            $request->attributes->set('_component_data', $requestData);
+            $request->attributes->set('_component_action_args', $requestData['args'] ?? []);
+        }
+
+        $request->attributes->set('_mounted_component', $this->container->get(LiveComponentHydrator::class)->hydrate(
+            $component,
+            $data,
+            $request->attributes->get('_component_name')
+        ));
+    }
+
     public function onKernelView(ViewEvent $event): void
     {
         if (!$this->isLiveComponentRequest($request = $event->getRequest())) {
+            return;
+        }
+
+        if (!$event->isMainRequest()) {
+            // sub-request, so skip rendering
+            $event->setResponse(new Response());
+
             return;
         }
 
