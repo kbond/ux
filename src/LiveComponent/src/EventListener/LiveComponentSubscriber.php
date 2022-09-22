@@ -29,6 +29,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\Service\ServiceSubscriberInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveArg;
+use Symfony\UX\LiveComponent\Controller\BatchActionController;
 use Symfony\UX\LiveComponent\LiveComponentHydrator;
 use Symfony\UX\TwigComponent\ComponentFactory;
 use Symfony\UX\TwigComponent\ComponentMetadata;
@@ -69,7 +70,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             return;
         }
 
-        if ($request->attributes->has('_controller')) {
+        if (!$event->isMainRequest()) {
             // sub request
             return;
         }
@@ -114,10 +115,16 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
 
         if ('_batch' === $action) {
             // use batch controller
-            $request->attributes->set('_controller', 'ux.live_component.batch_action_controller');
-            $request->attributes->set('_component_service_id', $metadata->getServiceId());
+            $data = $this->parseDataFor($request);
 
-            $this->mountComponent($this->container->get(ComponentFactory::class)->get($componentName), $request);
+            $request->attributes->set('_controller', 'ux.live_component.batch_action_controller');
+            $request->attributes->set('serviceId', $metadata->getServiceId());
+            $request->attributes->set('actions', $data['actions']);
+            $request->attributes->set('mounted', $this->container->get(LiveComponentHydrator::class)->hydrate(
+                $this->container->get(ComponentFactory::class)->get($componentName),
+                $data['data'],
+                $componentName,
+            ));
 
             return;
         }
@@ -133,11 +140,13 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             return;
         }
 
-        if ($request->attributes->has('_component_service_id')) {
+        $controller = $event->getController();
+
+        if ($controller instanceof BatchActionController) {
             return;
         }
 
-        if (!\is_array($controller = $event->getController()) || 2 !== \count($controller)) {
+        if (!\is_array($controller) || 2 !== \count($controller)) {
             throw new \RuntimeException('Not a valid live component.');
         }
 
@@ -155,7 +164,14 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             // sub-request
             $event->setController([$request->attributes->get('_mounted_component')->getComponent(), $action]);
         } else {
-            $this->mountComponent($component, $request);
+            $data = $this->parseDataFor($request);
+
+            $request->attributes->set('_component_action_args', $data['args']);
+            $request->attributes->set('_mounted_component', $this->container->get(LiveComponentHydrator::class)->hydrate(
+                $component,
+                $data['data'],
+                $request->attributes->get('_component_name')
+            ));
         }
 
         $actionArguments = $request->attributes->get('_component_action_args', []);
@@ -169,24 +185,30 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
         }
     }
 
-    private function mountComponent(object $component, Request $request): void
+    /**
+     * @return array{
+     *     data: array,
+     *     args: array,
+     *     actions: array
+     * }
+     */
+    private function parseDataFor(Request $request): array
     {
         if ($request->query->has('data')) {
-            // ?data=
-            $data = json_decode($request->query->get('data'), true, 512, \JSON_THROW_ON_ERROR);
-        } else {
-            // OR body of the request is JSON
-            $requestData = json_decode($request->getContent(), true, 512, \JSON_THROW_ON_ERROR);
-            $data = $requestData['data'] ?? [];
-            $request->attributes->set('_component_data', $requestData);
-            $request->attributes->set('_component_action_args', $requestData['args'] ?? []);
+            return [
+                'data' => json_decode($request->query->get('data'), true, 512, \JSON_THROW_ON_ERROR),
+                'args' => [],
+                'actions' => [],
+            ];
         }
 
-        $request->attributes->set('_mounted_component', $this->container->get(LiveComponentHydrator::class)->hydrate(
-            $component,
-            $data,
-            $request->attributes->get('_component_name')
-        ));
+        $requestData = json_decode($request->getContent(), true, 512, \JSON_THROW_ON_ERROR);
+
+        return [
+            'data' => $requestData['data'] ?? [],
+            'args' => $requestData['args'] ?? [],
+            'actions' => $requestData['actions'] ?? [],
+        ];
     }
 
     public function onKernelView(ViewEvent $event): void

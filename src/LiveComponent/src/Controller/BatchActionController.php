@@ -14,6 +14,7 @@ namespace Symfony\UX\LiveComponent\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\UX\TwigComponent\MountedComponent;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
@@ -26,21 +27,19 @@ final class BatchActionController
     {
     }
 
-    public function __invoke(Request $request): void
+    public function __invoke(Request $request, MountedComponent $mounted, string $serviceId, array $actions): void
     {
-        $actions = $request->attributes->get('_component_data')['actions'] ?? throw new BadRequestHttpException();
-        $serviceId = $request->attributes->get('_component_service_id');
-        $attributes = $request->attributes->all();
-
-        unset($attributes['_component_service_id']);
+        $request->attributes->set('_mounted_component', $mounted);
 
         foreach ($actions as $action) {
             $name = $action['name'] ?? throw new BadRequestHttpException('Invalid JSON');
 
-            $subRequest = $request->duplicate(attributes: \array_merge($attributes, [
+            $subRequest = $request->duplicate(attributes: [
                 '_controller' => [$serviceId, $name],
                 '_component_action_args' => $action['args'] ?? [],
-            ]));
+                '_mounted_component' => $mounted,
+                '_route' => 'live_component',
+            ]);
 
             $this->kernel->handle($subRequest, HttpKernelInterface::SUB_REQUEST);
 
