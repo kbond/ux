@@ -12,6 +12,7 @@
 namespace Symfony\UX\LiveComponent\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\UX\TwigComponent\MountedComponent;
@@ -27,7 +28,7 @@ final class BatchActionController
     {
     }
 
-    public function __invoke(Request $request, MountedComponent $mounted, string $serviceId, array $actions): void
+    public function __invoke(Request $request, MountedComponent $mounted, string $serviceId, array $actions): ?Response
     {
         $request->attributes->set('_mounted_component', $mounted);
 
@@ -41,10 +42,13 @@ final class BatchActionController
                 '_route' => 'live_component',
             ]);
 
-            $this->kernel->handle($subRequest, HttpKernelInterface::SUB_REQUEST);
+            $response = $this->kernel->handle($subRequest, HttpKernelInterface::SUB_REQUEST, false);
 
-            // todo handle redirects
-            // todo handle exceptions
+            if ($response->isRedirection()) {
+                return $response;
+            }
         }
+
+        return null;
     }
 }

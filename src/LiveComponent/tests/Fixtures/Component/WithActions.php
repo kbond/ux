@@ -11,6 +11,7 @@
 
 namespace Symfony\UX\LiveComponent\Tests\Fixtures\Component;
 
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
@@ -30,5 +31,21 @@ final class WithActions
     public function add(#[LiveArg] string $what, UrlGeneratorInterface $router): void
     {
         $this->items[] = $what;
+    }
+
+    #[LiveAction]
+    public function redirect(UrlGeneratorInterface $router): RedirectResponse
+    {
+        return new RedirectResponse($router->generate('homepage'));
+    }
+
+    #[LiveAction]
+    public function exception(): void
+    {
+        throw new \RuntimeException('Exception message');
+    }
+
+    public function nonLive(): void
+    {
     }
 }

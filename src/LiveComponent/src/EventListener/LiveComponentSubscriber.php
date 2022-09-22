@@ -160,10 +160,7 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
             throw new NotFoundHttpException(sprintf('The action "%s" either doesn\'t exist or is not allowed in "%s". Make sure it exist and has the LiveAction attribute above it.', $action, \get_class($component)));
         }
 
-        if ($request->attributes->has('_mounted_component')) {
-            // sub-request
-            $event->setController([$request->attributes->get('_mounted_component')->getComponent(), $action]);
-        } else {
+        if ($event->isMainRequest()) {
             $data = $this->parseDataFor($request);
 
             $request->attributes->set('_component_action_args', $data['args']);
@@ -172,6 +169,9 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
                 $data['data'],
                 $request->attributes->get('_component_name')
             ));
+        } else {
+            // sub-request
+            $event->setController([$request->attributes->get('_mounted_component')->getComponent(), $action]);
         }
 
         $actionArguments = $request->attributes->get('_component_action_args', []);

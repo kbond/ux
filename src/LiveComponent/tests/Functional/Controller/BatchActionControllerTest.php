@@ -68,21 +68,90 @@ final class BatchActionControllerTest extends KernelTestCase
 
     public function testCsrfTokenIsChecked(): void
     {
-        $this->markTestIncomplete();
-    }
+        $dehydrated = $this->dehydrateComponent($this->mountComponent('with_actions'));
 
-    public function testMustBeLiveComponent(): void
-    {
-        $this->markTestIncomplete();
+        $this->browser()
+            ->post('/_components/with_actions/_batch', ['json' => [
+                'data' => $dehydrated,
+                'actions' => [],
+            ]])
+            ->assertStatus(400)
+        ;
     }
 
     public function testRedirect(): void
     {
-        $this->markTestIncomplete();
+        $dehydrated = $this->dehydrateComponent($this->mountComponent('with_actions'));
+
+        $this->browser()
+            ->throwExceptions()
+            ->get('/_components/with_actions', ['json' => ['data' => $dehydrated]])
+            ->assertSuccessful()
+            ->interceptRedirects()
+            ->use(function (HtmlResponse $response, KernelBrowser $browser) {
+                $browser->post('/_components/with_actions/_batch', [
+                    'json' => [
+                        'data' => json_decode($response->crawler()->filter('ul')->first()->attr('data-live-data-value')),
+                        'actions' => [
+                            ['name' => 'add', 'args' => ['what' => 'second']],
+                            ['name' => 'redirect'],
+                            ['name' => 'add', 'args' => ['what' => 'fourth']],
+                        ],
+                    ],
+                    'headers' => ['X-CSRF-TOKEN' => $response->crawler()->filter('ul')->first()->attr('data-live-csrf-value')],
+                ]);
+            })
+            ->assertRedirectedTo('/')
+        ;
     }
 
     public function testException(): void
     {
-        $this->markTestIncomplete();
+        $dehydrated = $this->dehydrateComponent($this->mountComponent('with_actions'));
+
+        $this->browser()
+            ->get('/_components/with_actions', ['json' => ['data' => $dehydrated]])
+            ->assertSuccessful()
+            ->use(function (HtmlResponse $response, KernelBrowser $browser) {
+                $browser->post('/_components/with_actions/_batch', [
+                    'json' => [
+                        'data' => json_decode($response->crawler()->filter('ul')->first()->attr('data-live-data-value')),
+                        'actions' => [
+                            ['name' => 'add', 'args' => ['what' => 'second']],
+                            ['name' => 'exception'],
+                            ['name' => 'add', 'args' => ['what' => 'fourth']],
+                        ],
+                    ],
+                    'headers' => ['X-CSRF-TOKEN' => $response->crawler()->filter('ul')->first()->attr('data-live-csrf-value')],
+                ]);
+            })
+            ->assertStatus(500)
+            ->assertContains('Exception message')
+        ;
+    }
+
+    public function testCannotBatchWithNonLiveAction(): void
+    {
+        $dehydrated = $this->dehydrateComponent($this->mountComponent('with_actions'));
+
+        $this->browser()
+            ->get('/_components/with_actions', ['json' => ['data' => $dehydrated]])
+            ->assertSuccessful()
+            ->use(function (HtmlResponse $response, KernelBrowser $browser) {
+                $browser->post('/_components/with_actions/_batch', [
+                    'json' => [
+                        'data' => json_decode($response->crawler()->filter('ul')->first()->attr('data-live-data-value')),
+                        'actions' => [
+                            ['name' => 'add', 'args' => ['what' => 'second']],
+                            ['name' => 'nonLive'],
+                            ['name' => 'add', 'args' => ['what' => 'fourth']],
+                        ],
+                    ],
+                    'headers' => ['X-CSRF-TOKEN' => $response->crawler()->filter('ul')->first()->attr('data-live-csrf-value')],
+                ]);
+            })
+            ->assertStatus(404)
+            ->assertContains('The action \"nonLive\" either doesn\'t exist or is not allowed')
+        ;
     }
 }
