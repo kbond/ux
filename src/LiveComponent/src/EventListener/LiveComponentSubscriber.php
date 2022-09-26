@@ -201,7 +201,6 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
     private function parseDataFor(Request $request): array
     {
         if (!$request->attributes->has('_live_request_data')) {
-
             if ($request->query->has('data')) {
                 return [
                     'data' => json_decode($request->query->get('data'), true, 512, \JSON_THROW_ON_ERROR),
