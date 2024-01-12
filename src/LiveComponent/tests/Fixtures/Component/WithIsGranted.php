@@ -12,13 +12,11 @@
 namespace Symfony\UX\LiveComponent\Tests\Fixtures\Component;
 
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
  */
-#[AsLiveComponent('with_is_granted')]
 #[IsGranted('ROLE_USER')]
 class WithIsGranted
 {
