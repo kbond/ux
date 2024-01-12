@@ -432,4 +432,14 @@ final class LiveComponentSubscriberTest extends KernelTestCase
             ->assertContains('Prop1: default')
         ;
     }
+
+    public function testCanHaveControllerAttributes(): void
+    {
+        $dehydrated = $this->dehydrateComponent($this->mountComponent('with_is_granted'));
+
+        $this->browser()
+            ->get('/_components/with_is_granted?props='.urlencode(json_encode($dehydrated->getProps())))
+            ->assertStatus(401)
+        ;
+    }
 }
