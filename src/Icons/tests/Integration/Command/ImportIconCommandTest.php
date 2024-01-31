@@ -23,7 +23,7 @@ final class ImportIconCommandTest extends KernelTestCase
     use InteractsWithConsole;
 
     private const ICON_DIR = __DIR__.'/../../Fixtures/icons';
-    private const ICONS = ['dashboard.svg', 'renamed.svg'];
+    private const ICONS = ['dashboard.svg', 'renamed.svg', 'ei.php', 'renamed.php'];
 
     /**
      * @before
@@ -73,5 +73,41 @@ final class ImportIconCommandTest extends KernelTestCase
         ;
 
         $this->assertFileDoesNotExist(self::ICON_DIR.'/invalid.svg');
+    }
+
+    public function testImportPack(): void
+    {
+        $this->assertFileDoesNotExist($expectedFile = self::ICON_DIR.'/ei.php');
+
+        $this->executeConsoleCommand('ux:icons:import ei')
+            ->assertSuccessful()
+            ->assertOutputContains('Downloading set ei')
+            ->assertOutputContains('Imported set ei as ei')
+        ;
+
+        $this->assertFileExists($expectedFile);
+    }
+
+    public function testImportPackAndRename(): void
+    {
+        $this->assertFileDoesNotExist($expectedFile = self::ICON_DIR.'/renamed.php');
+
+        $this->executeConsoleCommand('ux:icons:import ei@renamed')
+            ->assertSuccessful()
+            ->assertOutputContains('Downloading set ei')
+            ->assertOutputContains('Imported set ei as renamed')
+        ;
+
+        $this->assertFileExists($expectedFile);
+    }
+
+    public function testImportNonExistentPack(): void
+    {
+        $this->executeConsoleCommand('ux:icons:import invalid')
+            ->assertSuccessful()
+            ->assertOutputContains('[ERROR] The icon pack "invalid" does not exist on iconify.design.')
+        ;
+
+        $this->assertFileDoesNotExist(self::ICON_DIR.'/invalid.php');
     }
 }

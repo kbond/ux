@@ -25,6 +25,7 @@ return static function (ContainerConfigurator $container): void {
         ->set('.ux_icons.command.import_icon', ImportIconCommand::class)
             ->args([
                 service('.ux_icons.local_svg_icon_registry'),
+                service('.ux_icons.iconify_icon_registry'),
                 service('http_client')->nullOnInvalid(),
             ])
             ->tag('console.command')

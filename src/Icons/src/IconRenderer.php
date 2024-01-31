@@ -82,7 +82,7 @@ final class IconRenderer
 
     private static function idFor(string $name): string
     {
-        return 'ux-icon-'.str_replace(['/', ':'], ['-', '--'], $name);
+        return 'ux-icon-'.str_replace(['/', ':'], ['-', '-'], $name);
     }
 
     /**

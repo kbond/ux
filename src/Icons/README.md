@@ -46,9 +46,48 @@ site.
 
 ```twig
 {{ ux_icon('user-profile', {class: 'w-4 h-4'}) }} <!-- renders "user-profile.svg" -->
-
-{{ ux_icon('sub-dir/user-profile', {class: 'w-4 h-4'}) }} <!-- renders "sub-dir/user-profile.svg" (sub-directory) -->
 ```
+
+### Icon Packs
+
+An icon pack is a set of icons under a common namespace. The namespace separator is `:`. For instance,
+for `heroicons:user-profile`, the namespace (or _prefix_), is `heroicons` and the icon is `user-profile`.
+
+#### Local Icon Packs
+
+SVG icons within subdirectories are considered _icon packs_. These can be rendered using the subdirectory
+name as a _namespace_:
+
+```twig
+{{ ux_icon('user:profile', {class: 'w-4 h-4'}) }} <!-- renders "user/profile.svg" -->
+```
+
+#### Iconify Icon Packs
+
+You can use the `ux:icons:import` command to import entire icon packs from
+[Iconify Design](https://icon-sets.iconify.design/).
+
+1. Visit [Iconify Design](https://icon-sets.iconify.design/) and search for an _icon pack_
+   you'd like to use. Once you find one you'd like to import, note its name (ie `heroicons`).
+2. Run the following command, replacing `heroicons` with the name of the pack you'd like
+   to install:
+
+   ```bash
+   bin/console ux:icons:import heroicons # saved as `heroicons.php`
+
+   # customize the local pack name
+   bin/console ux:icons:import heroicons@hero # saved as `hero.php`
+   ```
+3. The pack is saved as an optimized `.php` file within your `templates/icons/` directory. This
+   file should be committed to your repository.
+4. You can now render any icon from the pack:
+
+    ```twig
+    {{ ux_icon('heroicons:user-profile', {class: 'w-4 h-4'}) }}
+
+    {# if you've customized the local pack name as "hero" #}
+    {{ ux_icon('hero:user-profile', {class: 'w-4 h-4'}) }}
+    ```
 
 ### Deferred Icons
 
@@ -64,10 +103,13 @@ icon for all other instances.
 > `{{ ux_defered_icons() }}` ([as shown above](#setup)) needs to be on the page
 > for deferred icons to work.
 
-### List Available Icons
+### List Available Icon Packs
 
 ```bash
 bin/console ux:icons:list
+
+# list details on a specific pack
+bin/console ux:icons:list heroicons
 ```
 
 ## Caching

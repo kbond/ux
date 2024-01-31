@@ -15,6 +15,8 @@ use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\UX\Icons\Exception\IconNotFoundException;
+use Symfony\UX\Icons\Exception\IconPackNotFoundException;
+use Symfony\UX\Icons\IconPack;
 use Symfony\UX\Icons\IconRegistryInterface;
 
 /**
@@ -30,6 +32,8 @@ final class LocalSvgIconRegistry implements IconRegistryInterface
 
     public function get(string $name): array
     {
+        $name = str_replace(':', '/', $name);
+
         if (!file_exists($filename = sprintf('%s/%s.svg', $this->iconDir, $name))) {
             throw new IconNotFoundException(sprintf('The icon "%s" (%s) does not exist.', $name, $filename));
         }
@@ -59,13 +63,51 @@ final class LocalSvgIconRegistry implements IconRegistryInterface
     public function getIterator(): \Traversable
     {
         foreach ($this->finder()->sortByName() as $file) {
-            yield str_replace('.svg', '', $file->getRelativePathname());
+            yield str_replace(['.svg', '/'], ['', ':'], $file->getRelativePathname());
         }
     }
 
     public function count(): int
     {
         return $this->finder()->count();
+    }
+
+    public function packs(): array
+    {
+        $icons = [
+            '' => [],
+        ];
+
+        foreach ($this as $name) {
+            $parts = explode(':', $name, 2);
+
+            if (1 === \count($parts)) {
+                $icons[''][] = $name;
+
+                continue;
+            }
+
+            $icons[$parts[0]][] = $name;
+        }
+
+        return array_map(
+            function (string $name, array $icons) {
+                return new IconPack($name, \count($icons));
+            },
+            array_keys($icons),
+            $icons,
+        );
+    }
+
+    public function pack(string $name): IconPack
+    {
+        foreach ($this->packs() as $pack) {
+            if ($pack->prefix === $name) {
+                return $pack;
+            }
+        }
+
+        throw new IconPackNotFoundException(sprintf('The icon pack "%s" does not exist.', $name));
     }
 
     private function finder(): Finder

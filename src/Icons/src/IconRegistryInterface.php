@@ -12,6 +12,7 @@
 namespace Symfony\UX\Icons;
 
 use Symfony\UX\Icons\Exception\IconNotFoundException;
+use Symfony\UX\Icons\Exception\IconPackNotFoundException;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
@@ -28,4 +29,14 @@ interface IconRegistryInterface extends \IteratorAggregate, \Countable
      * @throws IconNotFoundException
      */
     public function get(string $name): array;
+
+    /**
+     * @return IconPack[]
+     */
+    public function packs(): array;
+
+    /**
+     * @throws IconPackNotFoundException
+     */
+    public function pack(string $name): IconPack;
 }

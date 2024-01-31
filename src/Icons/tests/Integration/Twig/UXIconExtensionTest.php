@@ -29,6 +29,7 @@ final class UXIconExtensionTest extends KernelTestCase
                 <li id="third">{{ ux_icon('sub/check', {defer: true}) }}</li>
                 <li id="forth">{{ ux_icon('sub/check', {defer: true}) }}</li>
                 <li id="fifth">{{ ux_icon('sub/check', {defer: true}) }}</li>
+                <li id="sixth">{{ ux_icon('heroicons:academic-cap') }}</li>
             </ul>
             {{ ux_deferred_icons({class: 'deferred'}) }}
             TWIG
@@ -36,7 +37,7 @@ final class UXIconExtensionTest extends KernelTestCase
 
         $crawler = new Crawler($output);
 
-        $this->assertCount(2, $crawler->filter('.svg svg path'));
+        $this->assertCount(3, $crawler->filter('.svg svg path'));
         $this->assertCount(1, $crawler->filter('.svg svg.h-6.w-6 path'));
         $this->assertCount(3, $crawler->filter('.svg svg use'));
         $this->assertCount(3, $crawler->filter('.svg use[xlink\:href="#ux-icon-sub-check"]'));

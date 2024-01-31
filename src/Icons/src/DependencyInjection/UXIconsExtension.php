@@ -79,6 +79,12 @@ final class UXIconsExtension extends ConfigurableExtension implements Configurat
             ])
         ;
 
+        $container->getDefinition('.ux_icons.iconify_icon_registry')
+            ->setArguments([
+                $mergedConfig['icon_dir'],
+            ])
+        ;
+
         $container->getDefinition('.ux_icons.icon_renderer')
             ->setArgument(2, $mergedConfig['default_icon_attributes'])
             ->setArgument(3, $mergedConfig['default_deferred_attributes'])

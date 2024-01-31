@@ -15,6 +15,7 @@ use Symfony\UX\Icons\Command\WarmIconCacheCommand;
 use Symfony\UX\Icons\IconRenderer;
 use Symfony\UX\Icons\IconStack;
 use Symfony\UX\Icons\Registry\CacheIconRegistry;
+use Symfony\UX\Icons\Registry\IconifyIconRegistry;
 use Symfony\UX\Icons\Registry\LocalSvgIconRegistry;
 use Symfony\UX\Icons\Twig\UXIconExtension;
 
@@ -22,11 +23,19 @@ return static function (ContainerConfigurator $container): void {
     $container->services()
         ->set('.ux_icons.cache_icon_registry', CacheIconRegistry::class)
             ->args([
-                iterator([service('.ux_icons.local_svg_icon_registry')]),
+                iterator([
+                    service('.ux_icons.local_svg_icon_registry'),
+                    service('.ux_icons.iconify_icon_registry'),
+                ]),
                 abstract_arg('cache'),
             ])
 
         ->set('.ux_icons.local_svg_icon_registry', LocalSvgIconRegistry::class)
+            ->args([
+                abstract_arg('icon_dir'),
+            ])
+
+        ->set('.ux_icons.iconify_icon_registry', IconifyIconRegistry::class)
             ->args([
                 abstract_arg('icon_dir'),
             ])

@@ -16,6 +16,8 @@ use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\UX\Icons\Exception\IconNotFoundException;
+use Symfony\UX\Icons\Exception\IconPackNotFoundException;
+use Symfony\UX\Icons\IconPack;
 use Symfony\UX\Icons\IconRegistryInterface;
 
 /**
@@ -35,7 +37,7 @@ final class CacheIconRegistry implements IconRegistryInterface, CacheWarmerInter
     public function get(string $name, bool $refresh = false): array
     {
         return $this->cache->get(
-            sprintf('ux-icon-%s', str_replace([':', '/'], ['--', '-'], $name)),
+            sprintf('ux-icon-%s', str_replace([':', '/'], ['-', '-'], $name)),
             function (ItemInterface $item) use ($name) {
                 if ($this->cache instanceof TagAwareCacheInterface) {
                     $item->tag('ux-icon');
@@ -53,6 +55,30 @@ final class CacheIconRegistry implements IconRegistryInterface, CacheWarmerInter
             },
             beta: $refresh ? \INF : null,
         );
+    }
+
+    public function packs(): array
+    {
+        $packs = [];
+
+        foreach ($this->registries as $registry) {
+            $packs[] = $registry->packs();
+        }
+
+        return array_merge(...$packs);
+    }
+
+    public function pack(string $name): IconPack
+    {
+        foreach ($this->registries as $registry) {
+            try {
+                return $registry->pack($name);
+            } catch (IconPackNotFoundException) {
+                // ignore
+            }
+        }
+
+        throw new IconPackNotFoundException(sprintf('The icon pack "%s" does not exist.', $name));
     }
 
     public function getIterator(): \Traversable
