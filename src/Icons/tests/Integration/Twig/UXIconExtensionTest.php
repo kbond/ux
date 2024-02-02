@@ -27,7 +27,7 @@ final class UXIconExtensionTest extends KernelTestCase
                 <li id="first">{{ ux_icon('user', {class: 'h-6 w-6'}) }}</li>
                 <li id="second">{{ ux_icon('user') }}</li>
                 <li id="third">{{ ux_icon('sub:check') }}</li>
-                <li id="forth">{{ ux_icon('sub/check') }}</li>
+                <li id="forth">{{ ux_icon('sub/check', {'data-foo': 'a "string" with a quote'}) }}</li>
                 <li id="fifth"><twig:Icon name="user" class="h-6 w-6" /></li>
                 <li id="sixth"><twig:Icon name="sub:check" /></li>
             </ul>
@@ -35,6 +35,8 @@ final class UXIconExtensionTest extends KernelTestCase
         )->render();
 
         $crawler = new Crawler($output);
+
+        dd($output);
 
         $this->assertCount(6, $crawler->filter('.svg svg path'));
         $this->assertCount(2, $crawler->filter('.svg svg.h-6.w-6 path'));

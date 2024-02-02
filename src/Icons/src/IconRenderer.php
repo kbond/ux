@@ -11,6 +11,9 @@
 
 namespace Symfony\UX\Icons;
 
+use Twig\Environment;
+use Twig\Extension\EscaperExtension;
+
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
  *
@@ -27,7 +30,7 @@ final class IconRenderer
     /**
      * @param array<string,string|bool> $attributes
      */
-    public function renderIcon(string $name, array $attributes = []): string
+    public function renderIcon(Environment $twig, string $name, array $attributes = []): string
     {
         [$content, $iconAttr] = $this->registry->get($name);
 
@@ -35,7 +38,7 @@ final class IconRenderer
 
         return sprintf(
             '<svg%s>%s</svg>',
-            self::normalizeAttributes([...$iconAttr, ...$attributes]),
+            self::normalizeAttributes($twig, [...$iconAttr, ...$attributes]),
             $content,
         );
     }
@@ -43,20 +46,30 @@ final class IconRenderer
     /**
      * @param array<string,string|bool> $attributes
      */
-    private static function normalizeAttributes(array $attributes): string
+    private static function normalizeAttributes(Environment $twig, array $attributes): string
     {
         return array_reduce(
             array_keys($attributes),
-            static function (string $carry, string $key) use ($attributes) {
+            static function (string $carry, string $key) use ($attributes, $twig) {
                 $value = $attributes[$key];
 
                 return match ($value) {
                     true => "{$carry} {$key}",
                     false => $carry,
-                    default => sprintf('%s %s="%s"', $carry, $key, $value),
+                    default => sprintf('%s %s="%s"', $carry, $key, self::escapeAsHtmlAttr($twig, $value)),
                 };
             },
             ''
         );
+    }
+
+    private static function escapeAsHtmlAttr(Environment $twig, mixed $value): string
+    {
+        if (method_exists(EscaperExtension::class, 'escape')) {
+            return EscaperExtension::escape($twig, $value, 'html_attr');
+        }
+
+        // since twig/twig 3.9.0: Using the internal "twig_escape_filter" function is deprecated.
+        return twig_escape_filter($twig, $value, 'html_attr');
     }
 }

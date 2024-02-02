@@ -25,7 +25,7 @@ final class UXIconExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('ux_icon', [IconRenderer::class, 'renderIcon'], ['is_safe' => ['html']]),
+            new TwigFunction('ux_icon', [IconRenderer::class, 'renderIcon'], ['needs_environment' => true, 'is_safe' => ['html']]),
         ];
     }
 }
