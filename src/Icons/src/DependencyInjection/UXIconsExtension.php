@@ -17,6 +17,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\HttpKernel\DependencyInjection\ConfigurableExtension;
+use Symfony\UX\Icons\Twig\UXIconExtension;
 
 /**
  * @author Kevin Bond <kevinbond@gmail.com>
@@ -68,6 +69,10 @@ final class UXIconsExtension extends ConfigurableExtension implements Configurat
 
         $container->getDefinition('.ux_icons.icon_renderer')
             ->setArgument(1, $mergedConfig['default_icon_attributes'])
+        ;
+
+        $container->getDefinition('.ux_icons.twig_icon_extension')
+            ->setArgument(0, $mergedConfig['twig_component_name'])
         ;
 
         $container->getDefinition('.ux_icons.twig_component_listener')
