@@ -1,0 +1,37 @@
+{% block manifest %}
+title: Tooltip
+description: Tooltip Stimulus controller.
+files:
+    - assets/controllers/tooltip_controller.js
+dependencies:
+    js: '@popperjs/core'
+references:
+    - https://www.stimulus-components.com/docs/stimulus-popover
+    - https://flowbite.com/docs/components/tooltips/
+    - https://dev.to/spaquet/rails-popper-tailwind-stimulus-1koi
+{% endblock %}
+
+{% block instructions %}
+    <p>Some instructions...</p>
+{% endblock %}
+
+{% block demo %}
+<button data-controller="tooltip" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide" data-tooltip-content-value="Top Tooltip">
+    Top
+</button>
+<button data-controller="tooltip" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide" data-tooltip-content-value="Right Tooltip" data-tooltip-placement-value="right">
+    Right
+</button>
+<button data-controller="tooltip" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide" data-tooltip-content-value="Bottom Tooltip" data-tooltip-placement-value="bottom">
+    Bottom
+</button>
+<button data-controller="tooltip" data-action="mouseenter->tooltip#show mouseleave->tooltip#hide" data-tooltip-content-value="Left Tooltip" data-tooltip-placement-value="left">
+    Left
+</button>
+<button data-controller="tooltip" data-action="click->tooltip#toggle" data-tooltip-content-value="Tooltip">
+    Click to toggle
+</button>
+<button data-controller="tooltip" data-action="click->tooltip#show" data-tooltip-hide-after-param="2000" data-tooltip-content-value="Tooltip">
+    Click to show, auto hide after 2s
+</button>
+{% endblock %}
