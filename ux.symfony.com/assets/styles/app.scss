@@ -125,3 +125,54 @@
 .code-description a {
     text-decoration: underline;
 }
+
+.Documentation {
+    a {
+        color: #007bff;
+    }
+
+    .Admonition {
+        padding: .5rem;
+        margin-bottom: 1rem;
+        border-left: 3px solid;
+        background-color: #f1f1f1;
+
+        :last-child {
+            margin-bottom: 0;
+        }
+
+        .Admonition--title {
+            font-weight: bold;
+        }
+
+        &.Admonition--note {
+            border-color: #007bff;
+            background-color: #f1f8ff;
+        }
+
+        &.Admonition--tip {
+            border-color: #28a745;
+            background-color: #f0fff4;
+        }
+
+        &.Admonition--warning {
+            border-color: #f5a623;
+            background-color: #fff8e1;
+        }
+
+        &.Admonition--caution {
+            border-color: #f5a623;
+            background-color: #fff8e1;
+        }
+
+        &.Admonition--danger {
+            border-color: #d9534f;
+            background-color: #f8d7da;
+        }
+
+        &.Admonition--important {
+            border-color: #6A2DBA;
+            background-color: #f3f0ff;
+        }
+    }
+}

@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% set meta = {
+    title: 'Sample Documentation',
+    title_suffix: " - Symfony UX",
+    description: 'Just a documentation sample to test markdown rendering',
+    canonical: url('app_documentation'),
+} %}
+
+{% block content %}
+    <div class="Documentation">
+        <aside class="container-xxl px-4 pt-4 px-md-5 pt-md-5 mt-5">
+            <p class="text-bold">Table of Contents</p>
+            <ul class="list-unstyled">
+                {% for item in toc %}
+                    <li>
+                        {%- for i in 0..(item.level * 2) %}&nbsp;{% endfor -%}
+                        <a href="{{ item.uri }}">{{ item.text }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </aside>
+        <article class="container-xxl px-4 pt-4 px-md-5 pt-md-5 mt-5">
+            {{ markdown|raw }}
+        </article>
+    </div>
+{% endblock %}
