@@ -25,9 +25,10 @@ return static function (ContainerConfigurator $container): void {
     $container->services()
         ->set('.ux_icons.cache_icon_registry', CacheIconRegistry::class)
             ->args([
-                service('.ux_icons.chain_registry'),
+                service('.inner'),
                 service('cache.system'),
             ])
+            ->decorate('.ux_icons.icon_registry', priority: 100)
 
         ->set('.ux_icons.local_svg_icon_registry', LocalSvgIconRegistry::class)
             ->args([
@@ -40,7 +41,7 @@ return static function (ContainerConfigurator $container): void {
                 tagged_iterator('ux_icons.registry'),
             ])
 
-        ->alias('.ux_icons.icon_registry', '.ux_icons.cache_icon_registry')
+        ->alias('.ux_icons.icon_registry', '.ux_icons.chain_registry')
 
         ->set('.ux_icons.twig_icon_extension', UXIconExtension::class)
             ->tag('twig.extension')
