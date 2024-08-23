@@ -14,6 +14,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Symfony\UX\Icons\Command\WarmCacheCommand;
 use Symfony\UX\Icons\IconCacheWarmer;
 use Symfony\UX\Icons\IconRenderer;
+use Symfony\UX\Icons\Registry\AliasIconRegistry;
 use Symfony\UX\Icons\Registry\CacheIconRegistry;
 use Symfony\UX\Icons\Registry\ChainIconRegistry;
 use Symfony\UX\Icons\Registry\LocalSvgIconRegistry;
@@ -28,7 +29,14 @@ return static function (ContainerConfigurator $container): void {
                 service('.inner'),
                 service('cache.system'),
             ])
-            ->decorate('.ux_icons.icon_registry', priority: 100)
+            ->decorate('.ux_icons.icon_registry', priority: -100)
+
+        ->set('.ux_icons.alias_icon_registry', AliasIconRegistry::class)
+            ->args([
+                service('.inner'),
+                abstract_arg('alias_map')
+            ])
+            ->decorate('.ux_icons.icon_registry')
 
         ->set('.ux_icons.local_svg_icon_registry', LocalSvgIconRegistry::class)
             ->args([
@@ -65,6 +73,7 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 service('twig'),
                 abstract_arg('icon_dir'),
+                service('.ux_icons.alias_icon_registry')->nullOnInvalid(),
             ])
 
         ->set('.ux_icons.cache_warmer', IconCacheWarmer::class)

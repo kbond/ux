@@ -518,6 +518,11 @@ Full Configuration
             # Default:
             fill: currentColor
 
+        # Map of icon aliases to icon names.
+        alias_map:
+            # Prototype
+            alias:                ~
+
         # Configuration for the "on demand" icons powered by Iconify.design.
         iconify:
            enabled: true
@@ -527,7 +532,7 @@ Full Configuration
 
            # The endpoint for the Iconify API.
            endpoint: 'https://api.iconify.design'
-           
+
         # Whether to ignore errors when an icon is not found.
         ignore_not_found: false
 

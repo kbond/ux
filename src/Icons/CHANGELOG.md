@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Unreleased
+
+- Add icon alias configuration
+
 ## 2.19.0
 
 -   Add `ignore_not_found` option to silence error during rendering if the 

@@ -43,6 +43,11 @@ final class UXIconsExtension extends ConfigurableExtension implements Configurat
                     ->info('Default attributes to add to all icons.')
                     ->defaultValue(['fill' => 'currentColor'])
                 ->end()
+                ->arrayNode('alias_map')
+                    ->info('Map of icon aliases to icon names.')
+                    ->useAttributeAsKey('alias')
+                    ->scalarPrototype()->cannotBeEmpty()->end()
+                ->end()
                 ->arrayNode('iconify')
                     ->info('Configuration for the "on demand" icons powered by Iconify.design.')
                     ->{interface_exists(HttpClientInterface::class) ? 'canBeDisabled' : 'canBeEnabled'}()
@@ -84,6 +89,14 @@ final class UXIconsExtension extends ConfigurableExtension implements Configurat
 
         if (class_exists(PreAssetsCompileEvent::class)) {
             $loader->load('asset_mapper.php');
+        }
+
+        if ($mergedConfig['alias_map']) {
+            $container->getDefinition('.ux_icons.alias_icon_registry')
+                ->setArgument(1, $mergedConfig['alias_map'])
+            ;
+        } else {
+            $container->removeDefinition('.ux_icons.alias_icon_registry');
         }
 
         $container->getDefinition('.ux_icons.local_svg_icon_registry')

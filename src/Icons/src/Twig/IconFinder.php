@@ -12,6 +12,7 @@
 namespace Symfony\UX\Icons\Twig;
 
 use Symfony\Component\Finder\Finder;
+use Symfony\UX\Icons\Registry\AliasIconRegistry;
 use Twig\Environment;
 use Twig\Loader\ChainLoader;
 use Twig\Loader\FilesystemLoader;
@@ -27,6 +28,7 @@ final class IconFinder
     public function __construct(
         private Environment $twig,
         private string $iconDirectory,
+        private ?AliasIconRegistry $aliasRegistry = null,
     ) {
     }
 
@@ -36,6 +38,10 @@ final class IconFinder
     public function icons(): array
     {
         $found = [];
+
+        if ($this->aliasRegistry) {
+            $found[] = $this->aliasRegistry->aliases();
+        }
 
         // https://regex101.com/r/WGa4iF/1
         $token = '[a-z0-9]+(?:-[a-z0-9]+)*';

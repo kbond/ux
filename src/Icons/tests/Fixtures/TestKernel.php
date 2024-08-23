@@ -60,6 +60,7 @@ final class TestKernel extends Kernel
 
         $container->extension('ux_icons', [
             'icon_dir' => '%kernel.project_dir%/tests/Fixtures/icons',
+            'alias_map' => ['u' => 'user'],
         ]);
 
         $container->services()->set('logger', NullLogger::class);
