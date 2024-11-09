@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+
+{% set meta = {
+    title: recipe.title~' - Recipe',
+    description: recipe.description,
+    canonical: url('app_recipe_show', {name: recipe.name}),
+} %}
+
+{% block content %}
+    <div class="hero">
+        <div class="container-fluid container-xxl px-4 pt-4 px-md-5">
+            <h1 class="text-center mt-5"><a href="{{ url('app_recipe_show', {name: recipe.name}) }}">{{ recipe.title }}</a></h1>
+            <div style="font-size: 1rem; line-height: 1.75rem;" class="mt-4 text-center demo-introduction">
+                <p>
+                    {{ recipe.description }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid container-xxl px-4 pt-4 px-md-5 pt-md-5">
+        <h2>Demo</h2>
+        <iframe
+            style="height: 500px; width: 100%;"
+            data-controller="iframe-content"
+            data-iframe-content-content-value="{{ include('recipe/demo.html.twig', {content: block('demo', recipe.template)})|e('html_attr') }}"
+        ></iframe>
+
+        <h2>Source</h2>
+        <pre><code>{{ recipe.demo|highlight('twig') }}</code></pre>
+
+        {% if recipe.dependencies.recipes %}
+            <h2>Required Recipes</h2>
+
+            <p><em>The following recipes are required:</em></p>
+            <ul>
+                {% for recipe in recipe.dependencies.recipes %}
+                    <li><a href="{{ path('app_recipe_show', {name: recipe}) }}">{{ recipe }}</a></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if recipe.dependencies.js %}
+            <h2>JS Dependencies</h2>
+
+            <h3>Symfony AssetMapper</h3>
+            <twig:TerminalCommand command="bin/console importmap:require {{ recipe.dependencies.js|join(' ') }}" />
+
+            <h3>NPM</h3>
+            <twig:TerminalCommand command="npm add {{ recipe.dependencies.js|join(' ') }}" />
+        {% endif %}
+
+        {% if recipe.dependencies.php %}
+            <h2>PHP Dependencies</h2>
+            <twig:TerminalCommand command="composer require {{ recipe.dependencies.php|join(' ') }}" />
+        {% endif %}
+
+        {% if block('instructions', recipe.template) is defined %}
+            <h2>Instructions</h2>
+
+            <div class="prose">
+                {{ block('instructions', recipe.template) }}
+            </div>
+        {% endif %}
+
+        {% if recipe.files %}
+            <h2>Files</h2>
+
+            {% for file in recipe.files %}
+                <twig:CodeBlock :filename="file.path" height="250px"/>
+            {% endfor %}
+        {% endif %}
+
+        {% if recipe.references %}
+            <h2>Credit</h2>
+            <ul>
+                {% for name,url in recipe.references %}
+                    <li><a href="{{ url }}">{{ name matches '/^\\d+$/' ? url : name }}</a></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+{% endblock %}

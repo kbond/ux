@@ -16,6 +16,10 @@ return [
         'path' => './assets/app.js',
         'entrypoint' => true,
     ],
+    'app-recipe-demo' => [
+        'path' => './assets/recipe-demo-app.js',
+        'entrypoint' => true,
+    ],
     'app-react' => [
         'path' => './assets/react/app-react.js',
         'entrypoint' => true,
@@ -199,5 +203,8 @@ return [
     ],
     '@symfony/ux-leaflet-map' => [
         'path' => './vendor/symfony/ux-leaflet-map/assets/dist/map_controller.js',
+    ],
+    'flowbite-datepicker' => [
+        'version' => '1.3.0',
     ],
 ];

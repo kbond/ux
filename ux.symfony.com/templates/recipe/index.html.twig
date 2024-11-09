@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% set meta = {
+    title: 'Recipes',
+    description: 'Symfony UX Recipes - Copy/paste-able code snippets for common UI needs.',
+    canonical: url('app_recipes'),
+} %}
+
+{% block content %}
+    <div class="hero">
+        <div class="container-fluid container-xxl px-4 pt-4 px-md-5">
+            <h1 class="text-center mt-5"><a href="{{ url('app_recipes') }}">Cookbook</a></h1>
+            <div style="font-size: 1rem; line-height: 1.75rem;" class="mt-4 text-center demo-introduction">
+                <p>
+                    Symfony UX Recipes - Copy/paste-able code snippets for common UI needs.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid container-xxl px-4 pt-4 px-md-5 pt-md-5">
+        <div style="display: grid; gap: 3rem; grid-template-columns: 1fr 1fr 1fr;">
+            {% for recipe in recipes %}
+                <twig:Card
+                    :name="recipe.title"
+                    :description="recipe.description"
+                    :url="url('app_recipe_show', {name: recipe.name})"
+                    :tags="recipe.tags"
+                />
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
