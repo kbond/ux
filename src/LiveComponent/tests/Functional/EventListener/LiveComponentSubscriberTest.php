@@ -12,12 +12,11 @@
 namespace Symfony\UX\LiveComponent\Tests\Functional\EventListener;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\DomCrawler\Crawler;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Security\Core\User\InMemoryUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\UX\LiveComponent\Tests\Fixtures\Entity\Entity1;
 use Symfony\UX\LiveComponent\Tests\LiveComponentTestHelper;
+use Zenstruck\Browser;
 use Zenstruck\Browser\Test\HasBrowser;
 use Zenstruck\Foundry\Test\Factories;
 use Zenstruck\Foundry\Test\ResetDatabase;
@@ -70,8 +69,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
             ->assertContains('Prop1: '.$entity->id)
             ->assertContains('Prop2: 2021-03-05 9:23')
             ->assertContains('Prop3: value3')
-            ->assertContains('Prop4: (none)')
-        ;
+            ->assertContains('Prop4: (none)');
     }
 
     public function testCanRenderComponentAsHtmlWithAlternateRoute(): void
@@ -89,8 +87,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
             ])
             ->assertSuccessful()
             ->assertOn('/alt/alternate_route', parts: ['path'])
-            ->assertContains('From alternate route. (count: 0)')
-        ;
+            ->assertContains('From alternate route. (count: 0)');
     }
 
     public function testCanExecuteComponentActionNormalRoute(): void
@@ -127,8 +124,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
             ->assertSuccessful()
             ->assertHeaderContains('Content-Type', 'html')
             ->assertContains('Count: 2')
-            ->assertSee('Embedded content with access to context, like count=2')
-        ;
+            ->assertSee('Embedded content with access to context, like count=2');
     }
 
     public function testCanExecuteComponentActionWithAlternateRoute(): void
@@ -151,24 +147,21 @@ final class LiveComponentSubscriberTest extends KernelTestCase
             ])
             ->assertSuccessful()
             ->assertOn('/alt/alternate_route/increase')
-            ->assertContains('count: 1')
-        ;
+            ->assertContains('count: 1');
     }
 
     public function testCannotExecuteComponentActionForGetRequest(): void
     {
         $this->browser()
             ->get('/_components/component2/increase')
-            ->assertStatus(405)
-        ;
+            ->assertStatus(405);
     }
 
     public function testCannotExecuteComponentDefaultActionForGetRequestWhenMethodIsPost(): void
     {
         $this->browser()
             ->get('/_components/with_method_post/__invoke')
-            ->assertStatus(405)
-        ;
+            ->assertStatus(405);
     }
 
     public function testPreReRenderHookOnlyExecutedDuringAjax(): void
@@ -187,8 +180,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
                 ],
             ])
             ->assertSuccessful()
-            ->assertSee('PreReRenderCalled: Yes')
-        ;
+            ->assertSee('PreReRenderCalled: Yes');
     }
 
     public function testItAddsEmbeddedTemplateContextToEmbeddedComponents(): void
@@ -224,8 +216,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
             ])
             ->assertSuccessful()
             ->assertSee('PreReRenderCalled: Yes')
-            ->assertSee('Embedded content with access to context, like count=1')
-        ;
+            ->assertSee('Embedded content with access to context, like count=1');
     }
 
     public function testItWorksWithNamespacedTemplateNamesForEmbeddedComponents(): void
@@ -237,8 +228,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
         $this->browser()
             ->visit('/render-namespaced-template/render_embedded_with_blocks')
             ->assertSuccessful()
-            ->assertElementAttributeContains('.component2', 'data-live-props-value', '"data-host-template":"'.$obscuredName.'"')
-        ;
+            ->assertElementAttributeContains('.component2', 'data-live-props-value', '"data-host-template":"'.$obscuredName.'"');
     }
 
     public function testItUseBlocksFromEmbeddedContextUsingMultipleComponents(): void
@@ -269,8 +259,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
             ])
             ->assertSuccessful()
             ->assertHeaderContains('Content-Type', 'html')
-            ->assertSee('Overridden content from component 2 on same line - count: 2')
-        ;
+            ->assertSee('Overridden content from component 2 on same line - count: 2');
     }
 
     public function testItUseBlocksFromEmbeddedContextUsingMultipleComponentsWithNamespacedTemplate(): void
@@ -301,8 +290,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
             ])
             ->assertSuccessful()
             ->assertHeaderContains('Content-Type', 'html')
-            ->assertSee('Overridden content from component 2 on same line - count: 2')
-        ;
+            ->assertSee('Overridden content from component 2 on same line - count: 2');
     }
 
     public function testCanRedirectFromComponentAction(): void
@@ -336,8 +324,69 @@ final class LiveComponentSubscriberTest extends KernelTestCase
             ->assertStatus(204)
             ->assertHeaderEquals('Location', '/')
             ->assertHeaderContains('X-Live-Redirect', '1')
-            ->assertHeaderEquals('X-Custom-Header', '1')
+            ->assertHeaderEquals('X-Custom-Header', '1');
+    }
+
+    public function testCanDownloadFileFromComponentAction(): void
+    {
+        $dehydrated = $this->dehydrateComponent($this->mountComponent('download_file'));
+
+        $this->browser()
+            ->throwExceptions()
+            ->post('/_components/download_file', [
+                'body' => [
+                    'data' => json_encode([
+                        'props' => $dehydrated->getProps(),
+                    ]),
+                ],
+            ])
+
+            ->interceptRedirects()
+            ->post('/_components/download_file/download', [
+                'headers' => [
+                    'Accept' => 'application/vnd.live-component+html',
+                ],
+                'body' => ['data' => json_encode(['props' => $dehydrated->getProps()])],
+            ])
+            ->assertStatus(200)
+            ->assertHeaderContains('X-Live-Download', '1')
+            ->assertHeaderContains('Content-Type', 'application/octet-stream')
+            ->assertHeaderContains('Content-Disposition', 'attachment')
+            ->assertHeaderEquals('Content-Length', '21')
         ;
+    }
+
+    public function testCanDownloadGeneratedFileFromComponentAction(): void
+    {
+        $dehydrated = $this->dehydrateComponent($this->mountComponent('download_file'));
+
+        $this->browser()
+            ->throwExceptions()
+            ->post('/_components/download_file', [
+                'body' => [
+                    'data' => json_encode([
+                        'props' => $dehydrated->getProps(),
+                    ]),
+                ],
+            ])
+            ->interceptRedirects()
+            ->assertSuccessful()
+            ->post('/_components/download_file/generate', [
+                'body' => [
+                    'data' => json_encode([
+                        'props' => $dehydrated->getProps(),
+                    ]),
+                ],
+            ])
+            ->assertStatus(200)
+            ->assertHeaderContains('X-Live-Download', '1')
+            ->assertHeaderContains('Content-Type', 'application/octet-stream')
+            ->assertHeaderContains('Content-Disposition', 'attachment')
+            ->assertHeaderEquals('Content-Length', '21')
+            ->use(function(Browser $browser) {
+                self::assertJson($browser->content());
+                self::assertSame(['foo' => 'bar'], \json_decode($browser->content(), true));
+            });
     }
 
     public function testInjectsLiveArgs(): void
@@ -371,8 +420,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
             ->assertHeaderContains('Content-Type', 'html')
             ->assertContains('Arg1: hello')
             ->assertContains('Arg2: 666')
-            ->assertContains('Arg3: 33.3')
-        ;
+            ->assertContains('Arg3: 33.3');
     }
 
     public function testWithNullableEntity(): void
@@ -389,8 +437,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
                 ],
             ])
             ->assertSuccessful()
-            ->assertContains('Prop1: default')
-        ;
+            ->assertContains('Prop1: default');
     }
 
     public function testCanHaveControllerAttributes(): void
@@ -407,8 +454,7 @@ final class LiveComponentSubscriberTest extends KernelTestCase
             ->actingAs(new InMemoryUser('kevin', 'pass', ['ROLE_USER']))
             ->assertAuthenticated('kevin')
             ->post('/_components/with_security?props='.urlencode(json_encode($dehydrated->getProps())))
-            ->assertSuccessful()
-        ;
+            ->assertSuccessful();
     }
 
     public function testCanInjectSecurityUserIntoAction(): void
@@ -436,7 +482,6 @@ final class LiveComponentSubscriberTest extends KernelTestCase
                 ],
             ])
             ->assertSuccessful()
-            ->assertSee('username: kevin')
-        ;
+            ->assertSee('username: kevin');
     }
 }
