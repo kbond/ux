@@ -308,12 +308,11 @@ export default class Component {
 
             const headers = backendResponse.response.headers;
             if (headers.get('X-Live-Download')) {
+                const headerContentDisposition = headers.get('Content-Disposition');
                 if (
-                    !(
-                        headers.get('Content-Disposition')?.includes('attachment') ||
-                        headers.get('Content-Disposition')?.includes('inline')
-                    ) ||
-                    !headers.get('Content-Disposition')?.includes('filename=')
+                    !headerContentDisposition
+                    || !(headerContentDisposition?.includes('attachment') || headerContentDisposition?.includes('inline')) 
+                    || !headerContentDisposition?.includes('filename=')
                 ) {
                     throw new Error('Invalid LiveDownload response');
                 }
