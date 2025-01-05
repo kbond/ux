@@ -15,6 +15,6 @@ export default class {
     }
 
     async getBlob(): Promise<Blob> {
-        return await this.response.blob();
+        return this.response.blob();
     }
 }
