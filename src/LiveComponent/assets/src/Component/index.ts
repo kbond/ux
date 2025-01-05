@@ -322,7 +322,7 @@ export default class Component {
                     throw new Error('File is too large to download (10MB limit)');
                 }
 
-                const fileName = headers.get('Content-Disposition')?.split('filename=')[1];
+                const fileName = headerContentDisposition.split('filename=')[1];
                 if (!fileName) {
                     throw new Error('No filename found in Content-Disposition header');
                 }
