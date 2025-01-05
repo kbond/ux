@@ -111,6 +111,9 @@ class BackendResponse {
         }
         return this.body;
     }
+    async getBlob() {
+        return await this.response.blob();
+    }
 }
 
 function getElementAsTagText(element) {
@@ -2119,11 +2122,43 @@ class Component {
         this.isRequestPending = false;
         this.backendRequest.promise.then(async (response) => {
             const backendResponse = new BackendResponse(response);
-            const html = await backendResponse.getBody();
             for (const input of Object.values(this.pendingFiles)) {
                 input.value = '';
             }
             const headers = backendResponse.response.headers;
+            if (headers.get('X-Live-Download')) {
+                if (!(headers.get('Content-Disposition')?.includes('attachment') ||
+                    headers.get('Content-Disposition')?.includes('inline')) ||
+                    !headers.get('Content-Disposition')?.includes('filename=')) {
+                    throw new Error('Invalid LiveDownload response');
+                }
+                const fileSize = Number.parseInt(headers.get('Content-Length') || '0');
+                if (fileSize > 10000000) {
+                    throw new Error('File is too large to download (10MB limit)');
+                }
+                const fileName = headers.get('Content-Disposition')?.split('filename=')[1];
+                if (!fileName) {
+                    throw new Error('No filename found in Content-Disposition header');
+                }
+                const blob = await backendResponse.getBlob();
+                const link = Object.assign(window.document.createElement('a'), {
+                    target: '_blank',
+                    style: 'display: none',
+                    href: window.URL.createObjectURL(blob),
+                    download: fileName,
+                });
+                this.element.appendChild(link);
+                link.click();
+                this.element.removeChild(link);
+                this.backendRequest = null;
+                thisPromiseResolve(backendResponse);
+                if (this.isRequestPending) {
+                    this.isRequestPending = false;
+                    this.performRequest();
+                }
+                return response;
+            }
+            const html = await backendResponse.getBody();
             if (!headers.get('Content-Type')?.includes('application/vnd.live-component+html') &&
                 !headers.get('X-Live-Redirect')) {
                 const controls = { displayError: true };

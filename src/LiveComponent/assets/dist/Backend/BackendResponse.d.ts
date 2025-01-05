@@ -3,4 +3,5 @@ export default class {
     private body;
     constructor(response: Response);
     getBody(): Promise<string>;
+    getBlob(): Promise<Blob>;
 }
