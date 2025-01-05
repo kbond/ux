@@ -12,8 +12,6 @@
 namespace App\Twig\Components;
 
 use App\Service\DocumentStorage;
-use DateTimeImmutable;
-use SplTempFileObject;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
@@ -27,77 +25,77 @@ use Symfony\UX\LiveComponent\LiveDownloadResponse;
 final class DownloadFiles
 {
     use DefaultActionTrait;
-    
+
     #[LiveProp(writable: true)]
     public int $year = 2025;
-    
+
     public function __construct(
         private readonly DocumentStorage $documentStorage,
     ) {
     }
-    
+
     #[LiveAction]
     public function download(): BinaryFileResponse
     {
         $file = $this->documentStorage->getFile('demos/empty.html');
-        
+
         return new LiveDownloadResponse($file);
     }
-    
+
     #[LiveAction]
     public function generate(#[LiveArg] string $format): BinaryFileResponse
     {
-        $report = match($format) {
+        $report = match ($format) {
             'csv' => $this->generateCsvReport($this->year),
             'json' => $this->generateJsonReport($this->year),
             'md' => $this->generateMarkdownReport($this->year),
             default => throw new \InvalidArgumentException('Invalid format provided'),
         };
-        
-        $file = new SplTempFileObject();
+
+        $file = new \SplTempFileObject();
         $file->fwrite($report);
-        
+
         return new LiveDownloadResponse($file, 'report.'.$format);
     }
-    
+
     private function generateCsvReport(int $year): string
     {
-        $file = new SplTempFileObject();
+        $file = new \SplTempFileObject();
         // $file->fputcsv(['Month', 'Number', 'Name', 'Number of days']);
         foreach ($this->getReportData($year) as $row) {
             $file->fputcsv($row);
         }
-        
+
         return $file->fread($file->ftell());
     }
-    
+
     private function generateMarkdownReport(int $year): string
     {
         $rows = iterator_to_array($this->getReportData($year));
-        
+
         foreach ($rows as $key => $row) {
             $rows[$key] = '|'.implode('|', $row).'|';
         }
-        
+
         return implode("\n", $rows);
     }
 
     private function generateJsonReport(int $year): string
     {
         $rows = iterator_to_array($this->getReportData($year));
-        
-        return \json_encode($rows, JSON_FORCE_OBJECT | JSON_THROW_ON_ERROR);
+
+        return json_encode($rows, \JSON_FORCE_OBJECT | \JSON_THROW_ON_ERROR);
     }
 
     /**
      * @param int<2000,2025> $year The year to generate the report for (2000-2025)
-     *                 
+     *
      * @return iterable<string, array{string, string}>
      */
     private function getReportData(int $year): iterable
     {
         foreach (range(1, 12) as $month) {
-            $startDate =  DateTimeImmutable::createFromFormat('Y', $year)->setDate($year, $month, 1);
+            $startDate = \DateTimeImmutable::createFromFormat('Y', $year)->setDate($year, $month, 1);
             $endDate = $startDate->modify('last day of this month');
             yield $month => [
                 'name' => $startDate->format('F'),

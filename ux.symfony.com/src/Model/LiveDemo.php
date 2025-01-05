@@ -44,7 +44,7 @@ final class LiveDemo extends Demo
     {
         return $this->longDescription;
     }
-    
+
     public function isNew(): bool
     {
         return \DateTimeImmutable::createFromFormat('Y-m-d', $this->getPublishedAt()) > new \DateTimeImmutable('-30 days');

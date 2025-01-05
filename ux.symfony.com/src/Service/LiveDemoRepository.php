@@ -21,7 +21,7 @@ class LiveDemoRepository
     public function findAll(): array
     {
         return [
-               new LiveDemo(
+            new LiveDemo(
                 'download',
                 name: 'Downloading files',
                 description: 'Return file as downloadable attachment from your Live Component.',
