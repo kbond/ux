@@ -13,4 +13,8 @@ export default class {
 
         return this.body;
     }
+
+    async getBlob(): Promise<Blob> {
+        return await this.response.blob();
+    }
 }
