@@ -1,0 +1,56 @@
+<div class="container p-lg-4" {{ attributes }}>
+    
+    <div class="row row-cols-lg-2">
+        <div class="col" style="display: flex; flex-direction: column; justify-content: space-between;">
+            
+            <div style="display: grid; place-content: center;padding-block: 2rem;">
+                <div style="max-width: 36rem;">
+                    <h4>Download an existing File</h4>
+                    <p>
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur tincidunt vulputate felis a ultricies. 
+                        Morbi at odio nec nulla imperdiet scelerisque a eget nibh. Donec convallis turpis ut nunc egestas rutrum.
+                    </p>
+                </div>
+            </div>
+                
+            <div style="display: grid; place-content: center;padding-block: 2rem;">
+                <button
+                    data-action="live#action"
+                    data-live-action-param="download"
+                    class="BigButton"
+                >
+                    <twig:ux:icon name="lucide:download" />
+                    Download !
+                </button>
+            </div>
+            
+        </div>
+        
+        <div class="col" style="display: flex; flex-direction: column; justify-content: space-between;">
+            
+            <h3>Or one generated on-demand</h3>
+            
+            <p>Choose a format:</p>
+            
+            <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                {% for format in ['csv',  'json', 'md'] %}
+                    <button type="button" 
+                            class="BigButton"
+                            data-action="live#action"
+                            data-live-action-param="generate"
+                            data-live-format-param="{{ format }}"
+                            style="display: flex;"
+                    >
+                        <twig:ux:icon name="bi:filetype-{{ format }}"  style="height: 1.5rem; width: 1.5rem;" />
+                        <span>
+                            <small>Download</small>
+                            <code>.{{ format|lower }}</code>
+                        </span>
+                    </button>
+                {% endfor %}
+            </div>
+                
+        </div>
+    </div>
+</div>
+    

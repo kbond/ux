@@ -21,6 +21,16 @@ class LiveDemoRepository
     public function findAll(): array
     {
         return [
+               new LiveDemo(
+                'download',
+                name: 'Downloading files',
+                description: 'Return file as downloadable attachment from your Live Component.',
+                author: 'smnandre',
+                publishedAt: '2025-01-01',
+                tags: ['file', 'upload', 'LiveAction', 'download', 'button'],
+                longDescription: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur tincidunt vulputate felis a ultricies.
+             * Morbi at odio nec nulla imperdiet scelerisque a eget nibh. Donec convallis turpis ut nunc egest',
+            ),
             new LiveDemo(
                 'infinite-scroll-2',
                 name: 'Infinite Scroll - 2/2',

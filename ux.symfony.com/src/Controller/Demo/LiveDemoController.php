@@ -100,6 +100,7 @@ class LiveDemoController extends AbstractController
     #[Route('/infinite-scroll-2', name: 'app_demo_live_component_infinite_scroll_2')]
     #[Route('/product-form', name: 'app_demo_live_component_product_form')]
     #[Route('/upload', name: 'app_demo_live_component_upload')]
+    #[Route('/download', name: 'app_demo_live_component_download')]
     public function demo(
         LiveDemoRepository $liveDemoRepository,
         string $demo,
