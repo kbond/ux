@@ -3,6 +3,8 @@
 ## 2.23.0
 
 -   Allow configuring the secret used to compute fingerprints and checksums.
+-   [EXPERIMENTAL] Add `LiveDownloadResponse` and enable file downloads from
+    a `LiveAction`. 
 
 ## 2.22.0
 
