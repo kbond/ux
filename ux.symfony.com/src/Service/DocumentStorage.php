@@ -11,7 +11,6 @@
 
 namespace App\Service;
 
-use App\Model\Document;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Path;
@@ -45,13 +44,13 @@ final class DocumentStorage
         return $this->filesystem->exists($this->getAbsolutePath($path));
     }
 
-    public function getFile(string $path): Document
+    public function getFile(string $path): string
     {
         if (!$this->hasFile($path)) {
             throw new \InvalidArgumentException(\sprintf('The file "%s" does not exist.', $path));
         }
 
-        return new Document($this->getAbsolutePath($path));
+        return $this->getAbsolutePath($path);
     }
 
     private function getAbsolutePath(string $path): string

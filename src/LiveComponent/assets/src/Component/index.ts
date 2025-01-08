@@ -307,22 +307,18 @@ export default class Component {
             }
 
             const headers = backendResponse.response.headers;
-            if (headers.get('X-Live-Download')) {
-                const headerContentDisposition = headers.get('Content-Disposition');
+            const headerContentDisposition = headers.get('Content-Disposition');
+
+            if (headerContentDisposition) {
                 if (
-                    !headerContentDisposition
-                    || !(headerContentDisposition?.includes('attachment') || headerContentDisposition?.includes('inline')) 
+                    !(headerContentDisposition?.includes('attachment') || headerContentDisposition?.includes('inline'))
                     || !headerContentDisposition?.includes('filename=')
                 ) {
                     throw new Error('Invalid LiveDownload response');
                 }
 
-                const fileSize = Number.parseInt(headers.get('Content-Length') || '0');
-                if (fileSize > 10000000) {
-                    throw new Error('File is too large to download (10MB limit)');
-                }
-
                 const fileName = headerContentDisposition.split('filename=')[1];
+
                 if (!fileName) {
                     throw new Error('No filename found in Content-Disposition header');
                 }

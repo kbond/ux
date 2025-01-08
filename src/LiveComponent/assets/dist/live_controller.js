@@ -112,7 +112,7 @@ class BackendResponse {
         return this.body;
     }
     async getBlob() {
-        return await this.response.blob();
+        return this.response.blob();
     }
 }
 
@@ -2126,17 +2126,13 @@ class Component {
                 input.value = '';
             }
             const headers = backendResponse.response.headers;
-            if (headers.get('X-Live-Download')) {
-                if (!(headers.get('Content-Disposition')?.includes('attachment') ||
-                    headers.get('Content-Disposition')?.includes('inline')) ||
-                    !headers.get('Content-Disposition')?.includes('filename=')) {
+            const headerContentDisposition = headers.get('Content-Disposition');
+            if (headerContentDisposition) {
+                if (!(headerContentDisposition?.includes('attachment') || headerContentDisposition?.includes('inline'))
+                    || !headerContentDisposition?.includes('filename=')) {
                     throw new Error('Invalid LiveDownload response');
                 }
-                const fileSize = Number.parseInt(headers.get('Content-Length') || '0');
-                if (fileSize > 10000000) {
-                    throw new Error('File is too large to download (10MB limit)');
-                }
-                const fileName = headers.get('Content-Disposition')?.split('filename=')[1];
+                const fileName = headerContentDisposition.split('filename=')[1];
                 if (!fileName) {
                     throw new Error('No filename found in Content-Disposition header');
                 }

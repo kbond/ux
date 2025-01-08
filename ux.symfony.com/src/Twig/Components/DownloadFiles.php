@@ -13,12 +13,13 @@ namespace App\Twig\Components;
 
 use App\Service\DocumentStorage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveArg;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
-use Symfony\UX\LiveComponent\LiveDownloadResponse;
 
 #[AsLiveComponent]
 // #[AsTaggedItem('controller.service_arguments')]
@@ -37,9 +38,39 @@ final class DownloadFiles
     #[LiveAction]
     public function download(): BinaryFileResponse
     {
-        $file = $this->documentStorage->getFile('demos/empty.html');
+        $file = $this->documentStorage->getFile('file.txt');
 
-        return new LiveDownloadResponse($file);
+        return (new BinaryFileResponse($file))
+            ->setContentDisposition(
+                HeaderUtils::DISPOSITION_ATTACHMENT,
+                'file.txt'
+            )
+        ;
+    }
+
+    #[LiveAction]
+    public function stream(): StreamedResponse
+    {
+        $file = $this->documentStorage->getFile('file.txt');
+
+        return new StreamedResponse(
+            function () use ($file) {
+                $outputStream = fopen('php://output', 'wb');
+                $inputStream = fopen($file, 'rb');
+
+                stream_copy_to_stream($inputStream, $outputStream);
+
+                fclose($outputStream);
+                fclose($inputStream);
+            },
+            headers: [
+                'Content-Type' => 'text/plain',
+                'Content-Disposition' => HeaderUtils::makeDisposition(
+                    HeaderUtils::DISPOSITION_ATTACHMENT,
+                    'file.txt'
+                ),
+            ]
+        );
     }
 
     #[LiveAction]
