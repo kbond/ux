@@ -15,7 +15,6 @@ use Psr\Container\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Exception\JsonException;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -46,7 +45,7 @@ use Symfony\UX\TwigComponent\MountedComponent;
 class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscriberInterface
 {
     private const HTML_CONTENT_TYPE = 'application/vnd.live-component+html';
-    private const JSON_CONTENT_TYPE = 'application/vnd.live-component+json';
+    private const MIXED_CONTENT_TYPE = 'application/vnd.live-component+mixed';
     private const REDIRECT_HEADER = 'X-Live-Redirect';
 
     public function __construct(
@@ -401,65 +400,34 @@ class LiveComponentSubscriber implements EventSubscriberInterface, ServiceSubscr
         return $response instanceof StreamedResponse || $response instanceof BinaryFileResponse;
     }
 
-    private function createDownloadResponse(Request $request, Response $response): Response
+    private function createDownloadResponse(Request $request, Response $fileResponse): Response
     {
-        return new JsonResponse(
-            [
-                '_content' => $this->createResponse($request->attributes->get('_mounted_component'))->getContent(),
-                '_download' => [
-                    'filename' => $this->createDownloadFilename($response),
-                    'content_type' => $response->headers->get('Content-Type'),
-                    'content' => $this->buildDownloadContent($response),
-                ]
-            ],
-            headers: ['Content-Type' => self::JSON_CONTENT_TYPE]
+        $htmlResponse = $this->createResponse($request->attributes->get('_mounted_component'));
+        $boundary = strtr(base64_encode(random_bytes(6)), '+/', '-_');
+
+        return new StreamedResponse(
+            function () use ($fileResponse, $htmlResponse, $boundary) {
+                // Start multipart response
+                echo "--{$boundary}\r\n";
+
+                // HTML Part
+                $htmlResponse->sendHeaders();
+                $htmlResponse->sendContent();
+                echo "\r\n--{$boundary}\r\n";
+                ob_flush();
+                flush();
+
+                // File Part
+                $fileResponse->sendHeaders();
+                $fileResponse->sendContent();
+                echo "\r\n--{$boundary}--\r\n";
+                ob_flush();
+                flush();
+            },
+            headers: [
+                'Content-Type' => sprintf('%s; boundary="%s"', self::MIXED_CONTENT_TYPE, $boundary),
+                'Content-Disposition' => $fileResponse->headers->get('Content-Disposition'),
+            ]
         );
-    }
-
-    /**
-     * @copyright Caleb Porzio
-     */
-    private function createDownloadFilename(Response $response): string
-    {
-        $header = $response->headers->get('Content-Disposition', '');
-
-        /**
-         * The following conditionals are here to allow for quoted and
-         * non quoted filenames in the Content-Disposition header.
-         *
-         * Both of these values should return the correct filename without quotes.
-         *
-         * Content-Disposition: attachment; filename=filename.jpg
-         * Content-Disposition: attachment; filename="test file.jpg"
-         */
-
-        // Support foreign-language filenames (japanese, greek, etc..)...
-        if (preg_match('/filename\*=utf-8\'\'(.+)$/i', $header, $matches)) {
-            return rawurldecode($matches[1]);
-        }
-
-        if (preg_match('/.*?filename="(.+?)"/', $header, $matches)) {
-            return $matches[1];
-        }
-
-        if (preg_match('/.*?filename=([^; ]+)/', $header, $matches)) {
-            return $matches[1];
-        }
-
-        return 'download';
-    }
-
-    /**
-     * @copyright Caleb Porzio
-     */
-    private function buildDownloadContent(Response $response): string
-    {
-        ob_start();
-
-        $response->sendContent();
-
-        $binary = ob_get_clean();
-
-        return base64_encode($binary);
     }
 }
